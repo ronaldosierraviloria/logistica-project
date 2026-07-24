@@ -1,70 +1,233 @@
-<div id="deleteModal" class="fixed top-0 left-0 w-full h-full z-[200] hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all">
-    <div id="modalContent" class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden transform scale-95 transition-all border border-white/10">
-        
-        <div class="p-10 text-center">
-            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-50 dark:bg-red-900/20 mb-6">
-                <i class="bi bi-exclamation-triangle text-red-600 dark:text-red-400 text-3xl animate-pulse"></i>
+<!-- ===================================================== -->
+<!-- Delete Confirmation Modal - Mejorado                   -->
+<!-- ===================================================== -->
+<div id="deleteModal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="deleteModalTitle"
+     aria-describedby="deleteModalDesc"
+     tabindex="-1"
+     class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto"
+     onclick="if(event.target===this) closeDeleteModal()">
+
+    <!-- Modal Content -->
+    <div id="modalContent"
+         class="relative w-full max-w-sm my-8 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 transition-all duration-200 scale-95 opacity-0 max-h-[80vh] overflow-y-auto">
+
+        <!-- Warning Icon with Ping animation -->
+        <div class="px-6 pt-6 pb-2 text-center">
+            <div class="relative mx-auto flex items-center justify-center w-14 h-14 mb-4">
+                <!-- Pulse ring -->
+                <div class="absolute inset-0 rounded-full bg-red-500/20 animate-ping"></div>
+                <!-- Inner circle -->
+                <div class="relative flex items-center justify-center w-14 h-14 rounded-full bg-red-50 dark:bg-red-500/10 ring-8 ring-red-50/50 dark:ring-red-500/5">
+                    <i data-lucide="trash-2" class="w-6 h-6 text-red-500"></i>
+                </div>
             </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white mb-3 uppercase tracking-tighter italic">¿Confirmar Borrado?</h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed uppercase tracking-tight px-4">
-                El registro seleccionado será eliminado permanentemente del sistema logístico.
+
+            <h3 id="deleteModalTitle" class="text-lg font-bold text-slate-800 dark:text-white mb-1.5">
+                Eliminar registro
+            </h3>
+            <p id="deleteModalDesc" class="text-sm text-slate-400 dark:text-slate-400 leading-relaxed">
+                Esta accion eliminara permanentemente el siguiente registro:
             </p>
+
+            <!-- Item Identifier Card -->
+            <div class="mt-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-200 dark:border-slate-600/30">
+                <p id="deleteItemName" class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate"></p>
+                <p id="deleteItemId" class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium"></p>
+            </div>
+
+            <!-- Irreversible warning -->
+            <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-amber-500 dark:text-amber-400">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                <span class="font-semibold">Esta accion no se puede deshacer</span>
+            </div>
         </div>
 
-        <div class="flex p-4 gap-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
-            <button onclick="closeDeleteModal()" 
+        <!-- Divider -->
+        <div class="mx-6 my-2 border-t border-slate-100 dark:border-slate-700/50"></div>
+
+        <!-- Footer Buttons -->
+        <div class="flex items-center justify-end gap-3 px-6 py-4">
+            <button type="button"
+                    onclick="closeDeleteModal()"
                     id="cancelBtn"
-                    class="flex-1 px-6 py-4 text-[10px] font-black text-slate-500 hover:bg-white dark:hover:bg-slate-700 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
-                CANCELAR
+                    class="flex-1 sm:flex-none px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 active:scale-[0.97]">
+                Cancelar
             </button>
-            
-            <button id="confirmBtn" onclick="processDelete()" 
-                    class="flex-1 px-6 py-4 text-[10px] font-black text-white bg-red-600 hover:bg-red-700 rounded-2xl shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 transition-all active:scale-95">
-                <span id="btnText">ELIMINAR</span>
-                <div id="btnSpinner" class="hidden h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <button type="button"
+                    id="confirmBtn"
+                    onclick="processDelete()"
+                    class="flex-1 sm:flex-none px-5 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:bg-red-700 rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500/40 inline-flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 active:scale-[0.97]">
+                <span id="btnText">Eliminar</span>
+                <div id="btnSpinner"
+                     class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
             </button>
         </div>
     </div>
 </div>
 
 <script>
-let deleteTargetUrl = "";
-const modal = document.getElementById('deleteModal');
-const modalContent = document.getElementById('modalContent');
+    (function() {
+        'use strict';
 
-function openDeleteModal(id) {
-    deleteTargetUrl = `/eliminar_activo/{{ tipo }}/${id}`;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    setTimeout(() => modalContent.classList.replace('scale-95', 'scale-100'), 10);
-}
+        let deleteTargetUrl = '';
+        let isModalOpen = false;
+        const modal = document.getElementById('deleteModal');
+        const content = document.getElementById('modalContent');
 
-function closeDeleteModal() {
-    modalContent.classList.replace('scale-100', 'scale-95');
-    setTimeout(() => {
-        modal.classList.replace('flex', 'hidden');
-        resetDeleteButton();
-    }, 200);
-}
+        // --- Open Modal ---
+        window.openDeleteModal = function(url, itemName) {
+            deleteTargetUrl = url || '';
 
-function processDelete() {
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
+            // Extract ID from URL for display
+            const parts = url.split('/').filter(Boolean);
+            const id = parts[parts.length - 1] || '---';
 
-    btnText.innerText = "PROCESANDO...";
-    btnSpinner.classList.remove('hidden');
-    confirmBtn.classList.add('opacity-80', 'pointer-events-none');
-    cancelBtn.classList.add('opacity-0', 'pointer-events-none');
+            // Update item info display
+            const nameEl = document.getElementById('deleteItemName');
+            const idEl = document.getElementById('deleteItemId');
 
-    setTimeout(() => { window.location.href = deleteTargetUrl; }, 800);
-}
+            if (nameEl) {
+                nameEl.textContent = itemName || 'Registro #' + id;
+                // Add a subtle entrance animation
+                nameEl.style.animation = 'none';
+                requestAnimationFrame(() => {
+                    nameEl.style.animation = 'deleteItemFadeIn 0.3s ease-out';
+                });
+            }
+            if (idEl) {
+                idEl.textContent = 'ID: ' + id;
+            }
 
-function resetDeleteButton() {
-    document.getElementById('btnText').innerText = "ELIMINAR";
-    document.getElementById('btnSpinner').classList.add('hidden');
-    document.getElementById('confirmBtn').classList.remove('opacity-80', 'pointer-events-none');
-    document.getElementById('cancelBtn').classList.remove('opacity-0', 'pointer-events-none');
-}
+            // Reset button state
+            resetDeleteButton();
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            // Trigger entrance animation
+            requestAnimationFrame(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            });
+
+            // Focus the cancel button by default (safer)
+            requestAnimationFrame(() => {
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn) cancelBtn.focus();
+            });
+
+            isModalOpen = true;
+        };
+
+        // --- Close Modal ---
+        window.closeDeleteModal = function() {
+            if (!isModalOpen) return;
+
+            // Exit animation
+            content.classList.add('scale-95', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
+            document.body.style.overflow = '';
+
+            isModalOpen = false;
+
+            setTimeout(function() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                resetDeleteButton();
+            }, 200);
+        };
+
+        // --- Close with ESC key ---
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isModalOpen) {
+                closeDeleteModal();
+                e.preventDefault();
+            }
+        });
+
+        // --- Focus Trap inside modal ---
+        document.addEventListener('keydown', function(e) {
+            if (!isModalOpen || e.key !== 'Tab') return;
+
+            const focusable = modal.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            );
+            if (focusable.length === 0) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        });
+
+        // --- Process Delete ---
+        window.processDelete = function() {
+            if (!deleteTargetUrl) return;
+
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            // Visual loading state
+            btnText.innerText = 'Eliminando...';
+            btnSpinner.classList.remove('hidden');
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            cancelBtn.disabled = true;
+            cancelBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Brief delay for UX feedback before redirect
+            setTimeout(function() {
+                window.location.href = deleteTargetUrl;
+            }, 700);
+        };
+
+        // --- Reset button state ---
+        function resetDeleteButton() {
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            if (btnText) btnText.innerText = 'Eliminar';
+            if (btnSpinner) btnSpinner.classList.add('hidden');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+            if (cancelBtn) {
+                cancelBtn.disabled = false;
+                cancelBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // --- Add keyframe animation for item name ---
+        if (!document.getElementById('deleteModalStyles')) {
+            const style = document.createElement('style');
+            style.id = 'deleteModalStyles';
+            style.textContent = `
+                @keyframes deleteItemFadeIn {
+                    from { opacity: 0; transform: translateY(-4px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    })();
 </script>

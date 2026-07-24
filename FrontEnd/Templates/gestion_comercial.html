@@ -4,187 +4,691 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
-<div class="space-y-6 page-animate-in">
-    
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic">
-                Performance <span class="text-blue-600">Comercial</span>
-            </h2>
-            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                {% if mes_actual %} Análisis: {{ meses[mes_actual|int - 1][1] }} 2024 {% else %} Consolidado Anual 2024 {% endif %}
-            </p>
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-medium mb-1">
+            <span>Dashboard</span>
+            <i data-lucide="chevron-right" class="w-3 h-3"></i>
+            <span class="text-primary-500 dark:text-primary-400 font-semibold">Comercial</span>
         </div>
-        
-        <div class="flex flex-wrap items-center gap-2">
-            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl items-center border border-transparent dark:border-slate-700">
-                <select id="mesSelector" class="bg-transparent border-none rounded-lg text-[10px] font-black uppercase py-1.5 px-3 outline-none text-slate-800 dark:text-white cursor-pointer focus:ring-0">
-                    <option value="" class="dark:bg-slate-800 text-slate-800 dark:text-white">Todo el Año</option>
-                    {% for valor, nombre in meses %}
-                    <option value="{{ valor }}" {% if mes_actual == valor %}selected{% endif %} class="dark:bg-slate-800 text-slate-800 dark:text-white">
-                        {{ nombre }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <button onclick="location.href='?mes='+document.getElementById('mesSelector').value" 
-                        class="bg-white dark:bg-slate-700 text-slate-800 dark:text-white text-[9px] font-black px-4 py-1.5 rounded-lg shadow-sm hover:bg-blue-500 hover:text-white transition-all">
-                    FILTRAR
-                </button>
-            </div>
-            
-            <button onclick="descargarExcel()" 
-                    class="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all active:scale-95">
-                <i class="bi bi-file-earmark-spreadsheet-fill"></i> EXPORTAR
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white">
+            Performance <span class="text-primary-500 dark:text-primary-400">Comercial</span>
+        </h2>
+        <p class="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
+            {% if mes_actual and anio_actual %} Analisis: {{ meses[mes_actual|int - 1][1] }} {{ anio_actual }}
+            {% elif anio_actual %} Analisis: Año {{ anio_actual }}
+            {% elif trimestre_actual %} Analisis: Trimestre {{ trimestre_actual }} {% if anio_actual %}{{ anio_actual }}{% else %}2024{% endif %}
+            {% else %} Consolidado Anual 2024 {% endif %}
+        </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <!-- Filters -->
+        <div class="inline-flex items-center bg-white dark:bg-slate-700/50 rounded-lg p-0.5 border border-slate-200 dark:border-slate-600 shadow-soft">
+            <!-- Year Filter -->
+            <select id="anioSelector"
+                    class="bg-transparent border-none text-sm font-medium text-slate-600 dark:text-slate-300 px-3 py-1.5 outline-none cursor-pointer focus:0 rounded-md">
+                <option value="" class="dark:bg-slate-700">Todos los Años</option>
+                {% for anio in ['2024', '2023', '2022'] %}
+                <option value="{{ anio }}" {% if anio_actual == anio %}selected{% endif %} class="dark:bg-slate-700">
+                    {{ anio }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <div class="w-px h-5 bg-slate-200 dark:bg-slate-600"></div>
+
+            <!-- Month Filter -->
+            <select id="mesSelector"
+                    class="bg-transparent border-none text-sm font-medium text-slate-600 dark:text-slate-300 px-3 py-1.5 outline-none cursor-pointer focus:0 rounded-md">
+                <option value="" class="dark:bg-slate-700">Todos los Meses</option>
+                {% for valor, nombre in meses %}
+                <option value="{{ valor }}" {% if mes_actual == valor %}selected{% endif %} class="dark:bg-slate-700">
+                    {{ nombre }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <div class="w-px h-5 bg-slate-200 dark:bg-slate-600"></div>
+
+            <!-- Quarter Filter -->
+            <select id="trimestreSelector"
+                    class="bg-transparent border-none text-sm font-medium text-slate-600 dark:text-slate-300 px-3 py-1.5 outline-none cursor-pointer focus:0 rounded-md">
+                <option value="" class="dark:bg-slate-700">Todo</option>
+                <option value="1" {% if trimestre_actual == '1' %}selected{% endif %} class="dark:bg-slate-700">Q1 (Ene-Mar)</option>
+                <option value="2" {% if trimestre_actual == '2' %}selected{% endif %} class="dark:bg-slate-700">Q2 (Abr-Jun)</option>
+                <option value="3" {% if trimestre_actual == '3' %}selected{% endif %} class="dark:bg-slate-700">Q3 (Jul-Sep)</option>
+                <option value="4" {% if trimestre_actual == '4' %}selected{% endif %} class="dark:bg-slate-700">Q4 (Oct-Dic)</option>
+            </select>
+
+            <button onclick="aplicarFiltros()"
+                    class="px-3 py-1.5 text-xs font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-md transition-colors">
+                Filtrar
+            </button>
+        </div>
+
+        <!-- Export Button -->
+        <div class="flex items-center gap-2">
+            <button onclick="descargarPDF()"
+                    class="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all focus:ring-4 focus:ring-red-500/20 shadow-soft no-print">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Exportar PDF
             </button>
         </div>
     </div>
+</div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="group bg-white dark:bg-slate-900 p-5 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-3">
-                <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600">
-                    <i class="bi bi-graph-up-arrow text-lg"></i>
-                </div>
-                <span class="text-[9px] font-black text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full italic">INGRESOS</span>
+<!-- ==================== ROW 1: Main KPIs ==================== -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <!-- Ingresos -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:shadow-soft-md transition-all duration-200 group">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 bg-primary-50 dark:bg-primary-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i data-lucide="trending-up" class="w-5 h-5 text-primary-500"></i>
             </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.ingresos) }}</h3>
-            <p class="text-[9px] text-slate-400 font-bold mt-1">Facturación bruta</p>
+            <span class="text-[10px] font-bold text-primary-500 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded-full">INGRESOS</span>
         </div>
-
-        <div class="group bg-white dark:bg-slate-900 p-5 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-3">
-                <div class="p-2 bg-rose-50 dark:bg-rose-900/30 rounded-xl text-rose-600">
-                    <i class="bi bi-cart-dash text-lg"></i>
-                </div>
-                <span class="text-[9px] font-black text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-0.5 rounded-full italic">GASTOS</span>
-            </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.gastos) }}</h3>
-            <p class="text-[9px] text-slate-400 font-bold mt-1">Costos operativos</p>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.ingresos) }}</h3>
+        <div class="flex items-center gap-1.5 mt-1">
+            {% if stats.crecimiento_ingresos > 0 %}
+            <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-emerald-500">
+                <i data-lucide="trending-up" class="w-3 h-3"></i> +{{ stats.crecimiento_ingresos }}%
+            </span>
+            {% elif stats.crecimiento_ingresos < 0 %}
+            <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-red-500">
+                <i data-lucide="trending-down" class="w-3 h-3"></i> {{ stats.crecimiento_ingresos }}%
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-slate-400">
+                <i data-lucide="minus" class="w-3 h-3"></i> 0%
+            </span>
+            {% endif %}
+            <span class="text-[10px] text-slate-400 dark:text-slate-500">vs mes ant.</span>
         </div>
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">Facturacion bruta</p>
+    </div>
 
-        <div class="group bg-white dark:bg-slate-900 p-5 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
-            <div class="flex justify-between items-start mb-3">
-                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl text-emerald-600">
-                    <i class="bi bi-cash-stack text-lg"></i>
-                </div>
-                <span class="text-[9px] font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full italic">UTILIDAD</span>
+    <!-- Gastos -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:shadow-soft-md transition-all duration-200 group">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i data-lucide="shopping-cart" class="w-5 h-5 text-red-500"></i>
             </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.utilidad) }}</h3>
-            <p class="text-[9px] text-slate-400 font-bold mt-1">Ganancia neta</p>
+            <span class="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-full">GASTOS</span>
         </div>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.gastos) }}</h3>
+        <div class="flex items-center gap-1.5 mt-1">
+            <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ stats.total_gastos }} registros</span>
+        </div>
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">Costos operativos</p>
+    </div>
 
-        <div class="bg-slate-900 p-5 rounded-[1.5rem] text-white shadow-lg relative overflow-hidden border border-slate-700">
-            <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Rentabilidad</p>
-            <h3 class="text-2xl font-black italic">{{ "{:.1f}".format(stats.margen) }}%</h3>
-            <div class="mt-3 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full rentabilidad-bar"></div>
+    <!-- Utilidad -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:shadow-soft-md transition-all duration-200 group">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i data-lucide="wallet" class="w-5 h-5 text-emerald-500"></i>
             </div>
+            <span class="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">UTILIDAD</span>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white {% if stats.utilidad < 0 %}text-red-500{% endif %}">
+            ${{ "{:,.0f}".format(stats.utilidad) }}
+        </h3>
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">Ganancia neta</p>
+    </div>
+
+    <!-- Margen -->
+    <div class="bg-slate-800 dark:bg-slate-700 p-5 rounded-xl text-white border border-slate-700 dark:border-slate-600 hover:shadow-soft-md transition-all duration-200 group">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 bg-primary-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i data-lucide="percent" class="w-5 h-5 text-primary-400"></i>
+            </div>
+            <span class="text-[10px] font-bold text-primary-400 uppercase">Rentabilidad</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <h3 class="text-2xl font-bold">{{ "{:.1f}".format(stats.margen) }}%</h3>
+            <div class="flex-shrink-0 w-[72px] h-[72px]">
+                <canvas id="margenMiniChart"></canvas>
+            </div>
+        </div>
+        <div class="mt-2 flex items-center gap-3 text-[10px] text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Margen {{ "{:.1f}".format(stats.margen) }}%</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-600"></span> Restante {{ "{:.1f}".format(100 - stats.margen) }}%</span>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-5 bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-            <h4 class="text-xs font-black text-slate-700 dark:text-white uppercase italic border-l-3 border-blue-500 pl-3 mb-6">Estado de Cartera</h4>
-            <div class="h-[280px] relative">
-                <canvas id="cobranzaChart"></canvas>
+    <!-- Avg Ticket -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:shadow-soft-md transition-all duration-200 group">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 bg-violet-50 dark:bg-violet-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i data-lucide="receipt" class="w-5 h-5 text-violet-500"></i>
             </div>
+            <span class="text-[10px] font-bold text-violet-500 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 rounded-full">TICKET PROM</span>
         </div>
-        <div class="lg:col-span-7 bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-            <h4 class="text-xs font-black text-slate-700 dark:text-white uppercase italic border-l-3 border-emerald-500 pl-3 mb-6">Rendimiento por Cliente</h4>
-            <div class="h-[280px]">
-                <canvas id="clientesChart"></canvas>
-            </div>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.avg_ticket) }}</h3>
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">{{ stats.total_facturas }} facturas ({{ stats.total_facturas_pagadas }} pagadas)</p>
+    </div>
+</div>
+
+<!-- ==================== ROW 2: Charts (Doughnuts side by side) ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Estado de Cartera -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50">
+        <h4 class="text-sm font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <span class="w-1 h-5 bg-primary-500 rounded-full"></span>
+            Estado de Cartera
+        </h4>
+        <div class="h-[260px] relative">
+            <canvas id="cobranzaChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Gastos por Categoria -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50">
+        <h4 class="text-sm font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <span class="w-1 h-5 bg-red-500 rounded-full"></span>
+            Gastos por Categoria
+        </h4>
+        <div class="h-[260px] relative">
+            <canvas id="gastosCatChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ROW 3: Ingresos vs Gastos (Line chart full width) ==================== -->
+<div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50 mb-6">
+    <h4 class="text-sm font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+        <span class="w-1 h-5 bg-emerald-500 rounded-full"></span>
+        Ingresos vs Gastos
+    </h4>
+    <div class="h-[300px]">
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
+<!-- ==================== ROW 4: Top Clientes + Margenes Mensuales ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Top Clientes -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50">
+        <h4 class="text-sm font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <span class="w-1 h-5 bg-amber-500 rounded-full"></span>
+            Top Clientes
+        </h4>
+        <div class="h-[280px]">
+            <canvas id="clientesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Margenes Mensuales -->
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700/50">
+        <h4 class="text-sm font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <span class="w-1 h-5 bg-blue-500 rounded-full"></span>
+            Evolucion del Margen
+        </h4>
+        <div class="h-[280px]">
+            <canvas id="margenesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ROW 5: Tablas Recientes ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Facturas Recientes -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+            <h4 class="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-primary-500"></i>
+                Facturas Recientes
+            </h4>
+            <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">{{ facturas_recientes|length }} registros</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-700/30">
+                        <th class="text-left px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Factura</th>
+                        <th class="text-left px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Cliente</th>
+                        <th class="text-right px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Monto</th>
+                        <th class="text-center px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/30">
+                    {% for f in facturas_recientes %}
+                    <tr class="table-row-hover transition-colors">
+                        <td class="px-5 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300">{{ f['ID_Factura'] }}</td>
+                        <td class="px-5 py-3 text-xs text-slate-500 dark:text-slate-400 truncate max-w-[140px]">{{ f['Nombre'] }}</td>
+                        <td class="px-5 py-3 text-xs font-semibold text-right text-slate-700 dark:text-slate-200">${{ "{:,.0f}".format(f['Monto']) }}</td>
+                        <td class="px-5 py-3 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
+                                {% if f['Estado'] == 'Pagada' %}bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                                {% elif f['Estado'] == 'Pendiente' %}bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400
+                                {% else %}bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400{% endif %}">
+                                {{ f['Estado'] }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Gastos Recientes -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+            <h4 class="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                <i data-lucide="receipt" class="w-4 h-4 text-red-500"></i>
+                Gastos Recientes
+            </h4>
+            <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">{{ gastos_recientes|length }} registros</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-700/30">
+                        <th class="text-left px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Gasto</th>
+                        <th class="text-left px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Categoria</th>
+                        <th class="text-right px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Monto</th>
+                        <th class="text-center px-5 py-3 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/30">
+                    {% for g in gastos_recientes %}
+                    <tr class="table-row-hover transition-colors">
+                        <td class="px-5 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300">{{ g['ID_Gasto'] }}</td>
+                        <td class="px-5 py-3 text-xs text-slate-500 dark:text-slate-400">{{ g['Categoria'] }}</td>
+                        <td class="px-5 py-3 text-xs font-semibold text-right text-slate-700 dark:text-slate-200">${{ "{:,.0f}".format(g['Monto']) }}</td>
+                        <td class="px-5 py-3 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
+                                {% if g['Estado'] == 'Pagado' %}bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
+                                {% else %}bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400{% endif %}">
+                                {{ g['Estado'] }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    Chart.register(ChartDataLabels);
-    Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.font.size = 10;
+Chart.register(ChartDataLabels);
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.size = 11;
 
-    const dataCobros = JSON.parse('{{ chart_cobranza | safe }}');
-    const colorMap = { 'Pagada': '#10b981', 'Pendiente': '#f59e0b', 'Vencida': '#ef4444' };
+const isDark = document.documentElement.classList.contains('dark');
+const gridColor = isDark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.15)';
+const textColor = isDark ? '#94a3b8' : '#64748b';
 
-    new Chart(document.getElementById('cobranzaChart'), {
-        type: 'doughnut',
-        data: {
-            labels: dataCobros.labels,
-            datasets: [{
-                data: dataCobros.values,
-                backgroundColor: dataCobros.labels.map(l => colorMap[l] || '#64748b'),
-                hoverOffset: 20,
-                borderWidth: 0,
-                cutout: '78%',
-                borderRadius: 10
-            }]
+// ============================================================
+// CHART 1: Estado de Cartera (Doughnut)
+// ============================================================
+const dataCobros = JSON.parse('{{ chart_cobranza | safe }}');
+const colorMap = { 'Pagada': '#10b981', 'Pendiente': '#f59e0b', 'Vencida': '#f43f5e' };
+
+new Chart(document.getElementById('cobranzaChart'), {
+    type: 'doughnut',
+    data: {
+        labels: dataCobros.labels,
+        datasets: [{
+            data: dataCobros.values,
+            backgroundColor: dataCobros.labels.map(l => colorMap[l] || '#94a3b8'),
+            hoverOffset: 16,
+            borderWidth: 0,
+            cutout: '72%',
+            borderRadius: 6,
+            spacing: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11, weight: '600' } }
+            },
+            datalabels: {
+                color: '#fff',
+                backgroundColor: (ctx) => ctx.dataset.backgroundColor[ctx.dataIndex],
+                borderRadius: 6,
+                font: { weight: '700', size: 10 },
+                padding: 6,
+                anchor: 'center',
+                align: 'center',
+                formatter: (value, ctx) => {
+                    let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                    return sum > 0 ? ((value * 100) / sum).toFixed(0) + "%" : "0%";
+                }
+            }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#64748b', usePointStyle: true, pointStyle: 'circle', padding: 25, font: { size: 11, weight: 'bold' } }
-                },
-                datalabels: {
-                    color: '#fff',
-                    backgroundColor: (ctx) => ctx.dataset.backgroundColor[ctx.dataIndex],
-                    borderRadius: 6,
-                    font: { weight: 'black', size: 10 },
-                    padding: 6,
-                    anchor: 'center',
-                    align: 'center',
-                    offset: 5,
-                    formatter: (value, ctx) => {
-                        let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                        return sum > 0 ? ((value * 100) / sum).toFixed(0) + "%" : "0%";
+        animation: {
+            animateRotate: true,
+            duration: 1200,
+            easing: 'easeOutQuart'
+        }
+    }
+});
+
+// ============================================================
+// CHART 2: Gastos por Categoria (Doughnut)
+// ============================================================
+const dataGastosCat = JSON.parse('{{ chart_gastos_cat | safe }}');
+const gastosColors = ['#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6', '#10b981', '#6366f1', '#ec4899'];
+
+new Chart(document.getElementById('gastosCatChart'), {
+    type: 'doughnut',
+    data: {
+        labels: dataGastosCat.labels,
+        datasets: [{
+            data: dataGastosCat.values,
+            backgroundColor: dataGastosCat.labels.map((_, i) => gastosColors[i % gastosColors.length]),
+            hoverOffset: 16,
+            borderWidth: 0,
+            cutout: '65%',
+            borderRadius: 6,
+            spacing: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 10, weight: '600' } }
+            },
+            datalabels: {
+                color: '#fff',
+                font: { weight: '700', size: 9 },
+                padding: 4,
+                anchor: 'center',
+                align: 'center',
+                formatter: (value, ctx) => {
+                    let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                    return sum > 0 ? ((value * 100) / sum).toFixed(0) + "%" : "0%";
+                }
+            }
+        },
+        animation: {
+            animateRotate: true,
+            duration: 1200,
+            easing: 'easeOutQuart'
+        }
+    }
+});
+
+// ============================================================
+// CHART 3: Ingresos vs Gastos (Line chart)
+// ============================================================
+const dataTrend = JSON.parse('{{ chart_trend | safe }}');
+const ctxTrend = document.getElementById('trendChart').getContext('2d');
+
+const ingresosGrad = ctxTrend.createLinearGradient(0, 0, 0, 300);
+ingresosGrad.addColorStop(0, 'rgba(99, 102, 241, 0.12)');
+ingresosGrad.addColorStop(1, 'rgba(99, 102, 241, 0.01)');
+
+const gastosGrad = ctxTrend.createLinearGradient(0, 0, 0, 300);
+gastosGrad.addColorStop(0, 'rgba(244, 63, 94, 0.12)');
+gastosGrad.addColorStop(1, 'rgba(244, 63, 94, 0.01)');
+
+new Chart(ctxTrend, {
+    type: 'line',
+    data: {
+        labels: dataTrend.labels,
+        datasets: [
+            {
+                label: 'Ingresos',
+                data: dataTrend.ingresos,
+                borderColor: '#6366f1',
+                backgroundColor: ingresosGrad,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#6366f1',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                borderWidth: 3
+            },
+            {
+                label: 'Gastos',
+                data: dataTrend.gastos,
+                borderColor: '#f43f5e',
+                backgroundColor: gastosGrad,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#f43f5e',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                borderWidth: 3
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                align: 'end',
+                labels: { color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11, weight: '600' } }
+            },
+            datalabels: { display: false },
+            tooltip: {
+                backgroundColor: isDark ? '#1e293b' : '#fff',
+                titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                bodyColor: isDark ? '#94a3b8' : '#64748b',
+                borderColor: isDark ? '#334155' : '#e2e8f0',
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 10,
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('es-CO');
                     }
                 }
             }
-        }
-    });
-
-    const dataCli = JSON.parse('{{ chart_top_clientes | safe }}');
-    const ctxCli = document.getElementById('clientesChart').getContext('2d');
-    const blueGradient = ctxCli.createLinearGradient(0, 0, 0, 400);
-    blueGradient.addColorStop(0, '#3b82f6');
-    blueGradient.addColorStop(1, '#1e40af');
-
-    new Chart(ctxCli, {
-        type: 'bar',
-        data: {
-            labels: dataCli.labels,
-            datasets: [{
-                data: dataCli.values,
-                backgroundColor: blueGradient,
-                borderRadius: 20,
-                barThickness: 50
-            }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { display: false },
-                x: { ticks: { font: { weight: 'black', size: 10 }, color: '#64748b' }, grid: { display: false } }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'center', align: 'top', offset: 10, color: '#ffffff',
-                    font: { weight: 'black', size: 11 },
-                    formatter: (value) => '$' + (value/1000000).toFixed(1) + 'M'
+        scales: {
+            y: {
+                grid: { color: gridColor },
+                ticks: {
+                    font: { size: 11 },
+                    callback: function(value) { return '$' + (value / 1000000).toFixed(0) + 'M'; }
                 }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { font: { size: 11, weight: '600' } }
             }
+        },
+        animation: {
+            duration: 1500,
+            easing: 'easeOutQuart'
         }
-    });
-    document.querySelector('.rentabilidad-bar').style.width = '{{ stats.margen }}%';
-    
-    function descargarExcel() {
-        const mes = document.getElementById('mesSelector').value;
-        window.location.href = `/exportar_comercial${mes ? '?mes='+mes : ''}`;
     }
+});
+
+// ============================================================
+// CHART 4: Top Clientes (Horizontal Bar)
+// ============================================================
+const dataCli = JSON.parse('{{ chart_top_clientes | safe }}');
+const ctxCli = document.getElementById('clientesChart').getContext('2d');
+const cliGrad = ctxCli.createLinearGradient(0, 0, 280, 0);
+cliGrad.addColorStop(0, '#6366f1');
+cliGrad.addColorStop(1, '#818cf8');
+
+new Chart(ctxCli, {
+    type: 'bar',
+    data: {
+        labels: dataCli.labels,
+        datasets: [{
+            data: dataCli.values,
+            backgroundColor: cliGrad,
+            borderRadius: 6,
+            barThickness: 32
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                display: false,
+                grid: { display: false }
+            },
+            y: {
+                ticks: {
+                    font: { weight: '600', size: 10 },
+                    color: textColor
+                },
+                grid: { display: false }
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'end',
+                offset: 4,
+                color: textColor,
+                font: { weight: '700', size: 10 },
+                formatter: (v) => '$' + (v / 1000000).toFixed(1) + 'M'
+            }
+        },
+        animation: {
+            duration: 1000,
+            easing: 'easeOutQuart'
+        }
+    }
+});
+
+// ============================================================
+// CHART 5: Margenes Mensuales (Bar with line overlay)
+// ============================================================
+const dataMargenes = JSON.parse('{{ chart_margenes | safe }}');
+const ctxMarg = document.getElementById('margenesChart').getContext('2d');
+
+const margenGrad = ctxMarg.createLinearGradient(0, 0, 0, 280);
+margenGrad.addColorStop(0, 'rgba(16, 185, 129, 0.5)');
+margenGrad.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+
+new Chart(ctxMarg, {
+    type: 'bar',
+    data: {
+        labels: dataMargenes.labels,
+        datasets: [{
+            label: 'Margen %',
+            data: dataMargenes.values,
+            backgroundColor: dataMargenes.values.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)'),
+            borderRadius: 6,
+            barThickness: 36,
+            yAxisID: 'y'
+        }, {
+            label: 'Utilidad ($)',
+            data: dataMargenes.utilidad,
+            type: 'line',
+            borderColor: '#6366f1',
+            backgroundColor: margenGrad,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#6366f1',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 2.5,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                align: 'end',
+                labels: { color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 10, weight: '600' } }
+            },
+            datalabels: {
+                anchor: 'end',
+                align: 'end',
+                offset: 2,
+                color: textColor,
+                font: { weight: '700', size: 9 },
+                formatter: (v, ctx) => ctx.datasetIndex === 0 ? v + '%' : ''
+            },
+            tooltip: {
+                backgroundColor: isDark ? '#1e293b' : '#fff',
+                titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                bodyColor: isDark ? '#94a3b8' : '#64748b',
+                borderColor: isDark ? '#334155' : '#e2e8f0',
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 10
+            }
+        },
+        scales: {
+            y: {
+                position: 'left',
+                grid: { color: gridColor },
+                ticks: {
+                    font: { size: 10 },
+                    callback: function(value) { return value + '%'; }
+                },
+                beginAtZero: true
+            },
+            y1: {
+                position: 'right',
+                grid: { display: false },
+                ticks: {
+                    font: { size: 10 },
+                    callback: function(value) { return '$' + (value / 1000000).toFixed(0) + 'M'; }
+                }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { font: { size: 10, weight: '600' } }
+            }
+        },
+        animation: {
+            duration: 1200,
+            easing: 'easeOutQuart'
+        }
+    }
+});
+
+function aplicarFiltros() {
+    const anio = document.getElementById('anioSelector').value;
+    const mes = document.getElementById('mesSelector').value;
+    const trimestre = document.getElementById('trimestreSelector').value;
+    
+    const params = new URLSearchParams();
+    if (anio) params.append('anio', anio);
+    if (mes) params.append('mes', mes);
+    if (trimestre) params.append('trimestre', trimestre);
+    
+    const queryString = params.toString();
+    window.location.href = '/gestion_comercial' + (queryString ? '?' + queryString : '');
+}
+
+function descargarPDF() {
+    window.print();
+}
 </script>
 {% endblock %}

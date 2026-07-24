@@ -1,31 +1,56 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Sincelejo S.A.S</title>
+    <title>Login | Centro de Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style> * { font-family: 'Poppins', sans-serif; } </style>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81'
+                        },
+                        surface: '#F4F4F4'
+                    },
+                    boxShadow: {
+                        'soft': '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.03)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-slate-950 flex items-center justify-center min-h-screen p-4">
+<body class="bg-surface dark:bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans antialiased">
 
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-sm">
+        <!-- Logo & Header -->
         <div class="text-center mb-8">
-            <img src="{{ url_for('static', filename='Images/FONDO.png') }}" alt="Logo" class="w-16 mx-auto mb-4">
-            <h1 class="text-white text-xl font-bold tracking-tight italic uppercase">Sincelejo S.A.S</h1>
-            <p class="text-slate-500 text-[10px] tracking-widest uppercase">Portal de Operaciones</p>
+            <div class="inline-flex items-center justify-center w-14 h-14 mb-4">
+                <img src="{{ url_for('static', filename='Images/FONDO.png') }}" alt="Logo" class="w-14 h-14 object-contain">
+            </div>
+            <h1 class="text-xl font-bold text-slate-800 dark:text-white">Centro de Control</h1>
+            <p class="text-sm text-slate-400 dark:text-slate-500 mt-1">Portal de Operaciones</p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl"></div>
-
+        <!-- Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-soft border border-slate-200 dark:border-slate-700/50 p-7">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="mb-4 p-3 rounded-xl text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                            <i class="bi bi-exclamation-circle mr-2"></i> {{ message }}
+                        <div class="mb-4 p-3.5 text-sm rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+                                <span>{{ message }}</span>
+                            </div>
                         </div>
                     {% endfor %}
                 {% endif %}
@@ -33,43 +58,71 @@
 
             <form action="/login" method="POST" class="space-y-5">
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Correo Corporativo</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Correo Electronico</label>
                     <div class="relative">
-                        <i class="bi bi-envelope absolute left-4 top-3 text-slate-500"></i>
-                        <input type="email" name="correo" required class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 ring-blue-500 outline-none transition-all" placeholder="nombre@empresa.com">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                        <input type="email" name="correo" required
+                               class="block w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all placeholder:text-slate-400"
+                               placeholder="nombre@empresa.com">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Contraseña</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Contrasena</label>
                     <div class="relative">
-                        <i class="bi bi-lock absolute left-4 top-3 text-slate-500"></i>
-                        <input type="password" name="password" required class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 ring-blue-500 outline-none transition-all" placeholder="••••••••">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                        <input type="password" name="password" id="password" required
+                               class="block w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all placeholder:text-slate-400"
+                               placeholder="••••••••">
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                            <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between px-1">
-                    <label class="flex items-center text-[10px] text-slate-400 cursor-pointer">
-                        <input type="checkbox" class="mr-2 rounded border-slate-700 bg-slate-800 text-blue-600"> Recordarme
+                <div class="flex items-center">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" class="w-4 h-4 text-primary-500 bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-500 rounded focus:ring-primary-500/30 transition-colors">
+                        <span class="text-sm text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">Recordarme</span>
                     </label>
-                    <a href="#" class="text-[10px] text-blue-400 hover:underline">¿Olvidaste tu clave?</a>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all text-sm uppercase tracking-wider">
+                <button type="submit"
+                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all text-sm focus:ring-4 focus:ring-primary-500/20">
                     Entrar al Sistema
                 </button>
             </form>
 
-            <div class="mt-8 pt-6 border-t border-slate-800 text-center">
-                <p class="text-slate-500 text-[11px]">
-                    ¿No tienes acceso? <a href="{{ url_for('register') }}" class="text-blue-400 hover:underline font-semibold italic">Solicita una cuenta</a>
+            <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-700/50 text-center">
+                <p class="text-sm text-slate-400 dark:text-slate-400">
+                    <a href="{{ url_for('register') }}" class="text-primary-500 dark:text-primary-400 hover:text-primary-600 font-semibold transition-colors">Registrarse</a>
                 </p>
             </div>
         </div>
-        
-        <p class="text-center text-slate-600 text-[9px] mt-8 uppercase tracking-[0.3em]">
-            © 2025 Sincelejo Logística S.A.S
-        </p>
+
+        <p class="text-center text-slate-400 text-xs mt-6">&copy; 2025 Logistica S.A.S</p>
     </div>
+
+    <script>
+        lucide.createIcons();
+        
+        function togglePassword() {
+            const password = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (password.type === 'password') {
+                password.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                password.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

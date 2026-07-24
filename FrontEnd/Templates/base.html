@@ -1,183 +1,191 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística Dashboard | Sincelejo S.A.S</title>
-    
+    <title>Logistica Dashboard | Sincelejo S.A.S</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81'
+                        },
+                        surface: {
+                            DEFAULT: '#F4F4F4',
+                            dark: '#0f172a'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.03)',
+                        'soft-md': '0 4px 6px -1px rgba(0,0,0,0.04), 0 2px 4px -2px rgba(0,0,0,0.03)',
+                    }
                 }
             }
         }
     </script>
-
     <script>
         const theme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.classList.toggle('dark', theme === 'dark');
     </script>
-
-    <style>
-        body { font-family: 'Poppins', sans-serif; overflow-x: hidden; }
-    
-        @keyframes pageIn {
-            from { opacity: 0; transform: scale(0.98) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes pageOut {
-            from { opacity: 1; transform: scale(1); }
-            to { opacity: 0; transform: scale(1.02) translateY(-10px); }
-        }
-        .page-animate-in { animation: pageIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        .page-animate-out { animation: pageOut 0.3s cubic-bezier(0.5, 0, 0.7, 0.4) forwards; }
-    </style>
 </head>
-<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-all duration-300">
+<body class="bg-surface dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen font-sans antialiased">
 
-    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden"></div>
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-40 hidden lg:hidden"></div>
 
-    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-72 bg-slate-900 text-slate-300 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800 flex flex-col shadow-2xl overflow-hidden">
-        
-        <div class="pt-8 pb-6 text-center flex flex-col items-center flex-shrink-0">
-            <div class="bg-white p-3 rounded-[1rem] mb-4 shadow-xl shadow-blue-500/10">
-                <img src="{{ url_for('static', filename='Images/FONDO.png') }}" alt="Logo" class="w-20 h-20 object-contain">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-50 w-64 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700/50 transform -translate-x-full lg:translate-x-0 transition-all duration-300 ease-out flex flex-col">
+
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-100/30 dark:border-slate-700/20 group">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                <img src="{{ url_for('static', filename='Images/FONDO.png') }}" alt="Logo" class="w-9 h-9 object-contain logo-animate">
             </div>
-            <h1 class="text-[11px] font-black tracking-[0.3em] text-white uppercase italic">Sincelejo S.A.S</h1>
-            <div class="h-0.5 w-8 bg-blue-500 mt-3 rounded-full opacity-50"></div>
+            <div class="sidebar-text-group flex-1 min-w-0">
+                <h1 class="text-sm font-bold text-slate-900 dark:text-white leading-tight sidebar-text">Sincelejo S.A.S</h1>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium sidebar-text">Panel Operativo</p>
+            </div>
         </div>
 
-        <nav class="flex-1 px-5 py-2 space-y-2 overflow-y-hidden">
-            <a href="{{ url_for('index') }}" 
-               class="flex items-center px-4 py-3 text-[11px] rounded-2xl transition-all group {% if vista == 'dashboard' %}bg-blue-600 text-white shadow-lg shadow-blue-600/30{% else %}hover:bg-slate-800 text-slate-400 hover:text-white{% endif %}">
-                <i class="bi bi-grid-1x2-fill mr-4 text-lg"></i> 
-                <span class="font-bold uppercase tracking-widest">Dashboard</span>
+        <!-- Navigation -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <a href="{{ url_for('index') }}"
+               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150
+                      {% if vista == 'dashboard' %}bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400{% else %}text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200{% endif %}">
+                <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
+                <span class="sidebar-text">Dashboard</span>
             </a>
 
-            <div class="pt-4 pb-1 px-4 text-[9px] uppercase font-black text-slate-600 tracking-[0.2em]">Módulos</div>
+            <div class="pt-5 pb-2 px-3">
+                <p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider sidebar-text">Modulos</p>
+            </div>
 
-            <a href="{{ url_for('activos_internos') }}" 
-               class="flex items-center px-4 py-3 text-[11px] rounded-2xl transition-all group {% if vista == 'activos' %}bg-blue-600 text-white shadow-lg{% else %}hover:bg-slate-800 text-slate-400 hover:text-white{% endif %}">
-                <i class="bi bi-layers-half mr-4 text-lg"></i> <span class="font-bold uppercase tracking-widest">Activos</span>
+            <a href="{{ url_for('activos_internos') }}"
+               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150
+                      {% if vista == 'activos' %}bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400{% else %}text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200{% endif %}">
+                <i data-lucide="box" class="w-4 h-4 flex-shrink-0"></i>
+                <span class="sidebar-text">Activos</span>
             </a>
 
-            <a href="{{ url_for('operaciones') }}" 
-               class="flex items-center px-4 py-3 text-[11px] rounded-2xl transition-all group {% if vista == 'operaciones' %}bg-blue-600 text-white shadow-lg{% else %}hover:bg-slate-800 text-slate-400 hover:text-white{% endif %}">
-                <i class="bi bi-truck mr-4 text-lg"></i> <span class="font-bold uppercase tracking-widest">Logística</span>
+            <a href="{{ url_for('operaciones') }}"
+               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150
+                      {% if vista == 'operaciones' %}bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400{% else %}text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200{% endif %}">
+                <i data-lucide="truck" class="w-4 h-4 flex-shrink-0"></i>
+                <span class="sidebar-text">Logistica</span>
             </a>
 
-            <a href="{{ url_for('gestion_comercial') }}" 
-               class="flex items-center px-4 py-3 text-[11px] rounded-2xl transition-all group {% if vista == 'comercial' %}bg-blue-600 text-white shadow-lg{% else %}hover:bg-slate-800 text-slate-400 hover:text-white{% endif %}">
-                <i class="bi bi-briefcase mr-4 text-lg"></i> <span class="font-bold uppercase tracking-widest">Comercial</span>
+            <a href="{{ url_for('gestion_comercial') }}"
+               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150
+                      {% if vista == 'comercial' %}bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400{% else %}text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200{% endif %}">
+                <i data-lucide="briefcase" class="w-4 h-4 flex-shrink-0"></i>
+                <span class="sidebar-text">Comercial</span>
+            </a>
+
+            <div class="pt-5 pb-2 px-3">
+                <p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider sidebar-text">Sistema</p>
+            </div>
+
+            <a href="{{ url_for('configuracion') }}"
+               class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150
+                      {% if vista == 'configuracion' %}bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400{% else %}text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-200{% endif %}">
+                <i data-lucide="settings" class="w-4 h-4 flex-shrink-0"></i>
+                <span class="sidebar-text">Configuracion</span>
             </a>
         </nav>
-        
-        <div class="p-6 mt-auto flex-shrink-0">
-            <div class="bg-slate-800/40 rounded-2xl p-4 border border-slate-700/30 text-center">
-                <p class="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Sistema de Gestión Logística</p>
-                <p class="text-[10px] text-blue-400 font-black italic">v2.4.0 • 2025</p>
+
+        <!-- Footer -->
+        <div class="px-4 py-4 border-t border-slate-100 dark:border-slate-700/50">
+            <div class="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 text-center">
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium sidebar-text">Sistema de Gestion Logistica</p>
+                <p class="text-[10px] text-primary-500 font-semibold sidebar-text">v2.4.0 - 2025</p>
             </div>
         </div>
     </aside>
 
-    <div class="md:ml-72 flex flex-col min-h-screen">
-        
-        <nav class="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 px-8 flex items-center justify-between shadow-sm">
-            
-            <div class="flex items-center gap-4 mr-8">
-                <button id="btn-open-sidebar" class="text-slate-800 dark:text-white md:hidden p-2 bg-slate-100 dark:bg-slate-800 rounded-lg"><i class="bi bi-list text-2xl"></i></button>
-                
-                <div class="flex items-center bg-slate-900 dark:bg-blue-600 px-5 py-2.5 rounded-xl shadow-md group cursor-default">
-                    <i class="bi bi-shield-lock-fill text-blue-400 dark:text-blue-100 mr-3 text-sm"></i>
-                    <h2 class="text-white text-[11px] font-black uppercase tracking-[0.15em] italic">
-                        <span class="hidden sm:inline">Sincelejo S.A.S <span class="opacity-30 mx-2">|</span> </span><span class="text-blue-200">Panel Operativo</span>
-                    </h2>
-                </div>
-            </div>
+    <!-- Main Content -->
+    <div class="lg:ml-64 flex flex-col min-h-screen main-content">
 
-            <div class="flex items-center gap-3">
-                <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl text-yellow-500 dark:text-blue-400 border border-slate-200 dark:border-slate-700 transition-all hover:scale-105">
-                    <i id="theme-toggle-icon" class="bi bi-sun-fill text-lg"></i>
-                </button>
-
-                <div class="relative ml-2">
-                    <button id="profile-btn" class="flex items-center gap-3 p-1 pr-4 bg-slate-900 dark:bg-slate-800 rounded-xl hover:ring-2 ring-blue-500/30 transition-all group">
-                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black">
-                           {{ session.get('user_name', 'U')[0] | upper if session.get('user_name') else 'U' }}
-                        </div>
-                        <div class="text-left hidden sm:block">
-                            <p class="text-[10px] font-black text-white uppercase leading-none">{{ session['user_name'] or 'Usuario' }}</p>
-                            <p class="text-[8px] text-blue-400 font-bold uppercase tracking-tighter mt-1">Nivel: {{ session['user_role'] or 'Admin' }}</p>
-                        </div>
+        <!-- Top Navbar -->
+        <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700/50">
+            <div class="flex items-center justify-between px-4 sm:px-6 h-14">
+                <!-- Left: mobile toggle + sidebar collapse + breadcrumb -->
+                <div class="flex items-center gap-1.5">
+                    <button id="sidebar-toggle" class="lg:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
                     </button>
+                    <button id="sidebar-collapse-btn" class="hidden lg:flex items-center justify-center p-2.5 rounded-xl text-slate-400 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all duration-200 group" title="Ocultar sidebar" aria-label="Ocultar sidebar">
+                        <i data-lucide="panel-left-close" class="w-5 h-5 collapse-btn-icon"></i>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
+                        <i data-lucide="shield" class="w-3.5 h-3.5 text-primary-500"></i>
+                        <span class="text-xs font-semibold text-primary-600 dark:text-primary-400">{{ tabla_activa if tabla_activa else 'Panel Operativo' }}</span>
+                    </div>
+                </div>
 
-                    <div id="profile-menu" class="hidden absolute right-0 mt-3 w-52 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 py-2">
-                        <a href="{{ url_for('logout') }}" class="flex items-center mx-2 px-4 py-3 text-[11px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
-                            <i class="bi bi-power mr-3 text-lg"></i> CERRAR SESIÓN
-                        </a>
+                <!-- Right: notifications + profile -->
+                <div class="flex items-center gap-1.5">
+                    {% include 'components/notification_panel.html' %}
+
+                    <div class="relative">
+                        <button id="profile-btn" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                            <div class="w-7 h-7 rounded-lg bg-primary-500 flex items-center justify-center text-white text-[11px] font-bold">
+                                {{ session.get('user_name', 'U')[0] | upper if session.get('user_name') else 'U' }}
+                            </div>
+                            <div class="hidden sm:block text-left">
+                                <p class="text-xs font-semibold text-slate-800 dark:text-white leading-none">{{ session['user_name'] or 'Usuario' }}</p>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">{{ session['user_role'] or 'Admin' }}</p>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 hidden sm:block"></i>
+                        </button>
+
+                        <!-- Profile dropdown -->
+                        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-xl shadow-soft-md border border-slate-200 dark:border-slate-600 py-1 z-50">
+                            <div class="px-4 py-2.5 border-b border-slate-100 dark:border-slate-600">
+                                <p class="text-sm font-semibold text-slate-800 dark:text-white">{{ session['user_name'] or 'Usuario' }}</p>
+                                <p class="text-xs text-slate-400 dark:text-slate-400">{{ session['user_role'] or 'Admin' }}</p>
+                            </div>
+                            <a href="{{ url_for('perfil') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                                Mi Perfil
+                            </a>
+                            <div class="border-t border-slate-100 dark:border-slate-600"></div>
+                            <a href="{{ url_for('logout') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                Cerrar Sesion
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </nav>
+        </header>
 
-        <main class="p-6 md:p-8 flex-grow page-animate-in">
+        <!-- Page Content -->
+        <main class="p-4 sm:p-6 lg:p-8 flex-grow">
             {% block content %}{% endblock %}
         </main>
     </div>
 
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        const openBtn = document.getElementById('btn-open-sidebar');
-        function toggleSidebar() { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); }
-        if(openBtn) openBtn.addEventListener('click', toggleSidebar);
-        if(overlay) overlay.addEventListener('click', toggleSidebar);
-
-        const profileBtn = document.getElementById('profile-btn');
-        const profileMenu = document.getElementById('profile-menu');
-        if(profileBtn) {
-            profileBtn.addEventListener('click', (e) => { e.stopPropagation(); profileMenu.classList.toggle('hidden'); });
-            document.addEventListener('click', () => profileMenu.classList.add('hidden'));
-        }
-
-        const themeBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-toggle-icon');
-        const html = document.documentElement;
-        function applyTheme(theme) {
-            if (theme === 'dark') { 
-                html.classList.add('dark'); 
-                themeIcon.className = 'bi bi-moon-stars-fill text-blue-400'; 
-            } else { 
-                html.classList.remove('dark'); 
-                themeIcon.className = 'bi bi-sun-fill text-yellow-500'; 
-            }
-            localStorage.setItem('theme', theme);
-        }
-        if(themeBtn) themeBtn.addEventListener('click', () => applyTheme(html.classList.contains('dark') ? 'light' : 'dark'));
-        applyTheme(localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const main = document.querySelector('main');
-            document.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', e => {
-                    const targetUrl = link.href;
-                    if (targetUrl.includes('http') && !targetUrl.includes('#') && link.hostname === window.location.hostname && !link.hasAttribute('download')) {
-                        e.preventDefault();
-                        main.classList.remove('page-animate-in');
-                        main.classList.add('page-animate-out');
-                        setTimeout(() => { window.location.href = targetUrl; }, 350);
-                    }
-                });
-            });
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

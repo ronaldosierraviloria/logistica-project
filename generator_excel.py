@@ -5,15 +5,14 @@ import random
 
 # Configuración
 n_datos = 100
+n_rutas = 10  # Solo las 10 rutas más importantes
 
-def generar_fechas(n, meses_atras=12):
-    fechas = []
-    fecha_fin = datetime(2024, 12, 31)
-    fecha_inicio = fecha_fin - timedelta(days=meses_atras * 30)
-    for _ in range(n):
-        dias_aleatorios = random.randint(0, (fecha_fin - fecha_inicio).days)
-        fechas.append((fecha_inicio + timedelta(days=dias_aleatorios)).strftime('%Y-%m-%d'))
-    return sorted(fechas)
+def generar_fechas(n, fecha_inicio=datetime(2022, 1, 1), fecha_fin=datetime(2024, 12, 31)):
+    """Genera n fechas aleatorias distribuidas entre fecha_inicio y fecha_fin,
+    cubriendo los 36 meses del rango (2022-2024)."""
+    total_dias = (fecha_fin - fecha_inicio).days
+    fechas = [fecha_inicio + timedelta(days=random.randint(0, total_dias)) for _ in range(n)]
+    return sorted(f.strftime('%Y-%m-%d') for f in fechas)
 
 # Listas extendidas para mayor variedad
 nombres_base = ["Juan", "Maria", "Carlos", "Ana", "Luis", "Elena", "Pedro", "Sofia", "Diego", "Lucia", 
@@ -35,9 +34,15 @@ apellidos_base = ["Perez", "Gomez", "Rodriguez", "Lopez", "Martinez", "Cano", "G
                  "Peña", "Carmona", "Valdez", "Barrera", "Orozco", "Lara", "Salgado", "Cueva", "Molina", "Rincon",
                  "Cordero", "Porras", "Sarmiento", "Daza", "Bermudez", "Cano", "Londoño", "Arango", "Gaitan", "Hernandez", "Lozada", "Maturana", "Naranjo", "Pastrana",
                  "Restrepo", "Trujillo", "Urbina", "Yepes", "Zambrano"]
+
+# Ciudades usadas para direcciones/generales (se mantiene variedad amplia)
 ciudades = ["Sincelejo", "Cartagena", "Barranquilla", "Monteria", "Medellin", "Bogota", "Santa Marta", "Cali", "Bucaramanga", "Pereira",
             "Manizales", "Armenia", "Neiva", "Ibagué", "Villavicencio", "Cúcuta", "Valledupar", "Popayán", "Tunja", "Florencia",
-            "Yopal", "Quibdó", "Riohacha", "San Andrés", "Leticia", "Mitú", "Puerto Carreño"]   
+            "Yopal", "Quibdó", "Riohacha", "San Andrés", "Leticia", "Mitú", "Puerto Carreño"]
+
+# Las 10 capitales de departamento más importantes de Colombia (mayor población / relevancia logística)
+capitales_principales = ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena",
+                          "Cúcuta", "Bucaramanga", "Pereira", "Santa Marta", "Ibagué"]
 
 data_dict = {
     "Empleados": {
@@ -48,7 +53,7 @@ data_dict = {
         "Telefono": [f"3{random.randint(0, 2)}{random.randint(0, 9)}{random.randint(1000000, 9999999)}" for _ in range(n_datos)],
         "Salario": [1800000 + (random.randint(1, 40) * 50000) for _ in range(n_datos)],
         "Cargo": random.choices(["Conductor", "Logistica", "Despachador", "Administrativo", "Mantenimiento", "Ventas", "Gerente Proyecto"], k=n_datos),
-        "Fecha_Ingreso": generar_fechas(n_datos, 24)
+        "Fecha_Ingreso": generar_fechas(n_datos)
     },
     "Vehiculos": {
         "ID_Vehiculo": [f"VEH{i:03}" for i in range(1, n_datos + 1)],
@@ -60,12 +65,12 @@ data_dict = {
         "Capacidad_Carga": [round(random.uniform(1.5, 35.0), 1) for _ in range(n_datos)]
     },
     "Rutas": {
-        "ID_Ruta": [f"RT{i:03}" for i in range(1, n_datos + 1)],
-        "Origen": [random.choice(ciudades) for _ in range(n_datos)],
-        "Destino": [random.choice(ciudades) for _ in range(n_datos)],
-        "Distancia": [random.randint(50, 1200) for _ in range(n_datos)],
-        "Tiempo_Entrega": [f"{random.randint(4, 48)} Horas" for _ in range(n_datos)],
-        "Costo_Transporte": [random.randint(250000, 2800000) for _ in range(n_datos)]
+        "ID_Ruta": [f"RT{i:03}" for i in range(1, n_rutas + 1)],
+        "Origen": [],
+        "Destino": [],
+        "Distancia": [random.randint(50, 1200) for _ in range(n_rutas)],
+        "Tiempo_Entrega": [f"{random.randint(4, 48)} Horas" for _ in range(n_rutas)],
+        "Costo_Transporte": [random.randint(250000, 2800000) for _ in range(n_rutas)]
     },
     "Clientes": {
         "ID_Cliente": [f"CLI{i:03}" for i in range(1, n_datos + 1)],
@@ -80,11 +85,11 @@ data_dict = {
         "Peso": [random.randint(50, 8000) for _ in range(n_datos)],
         "Volumen": [round(random.uniform(1.0, 50.0), 2) for _ in range(n_datos)],
         "Valor_Carga": [random.randint(5000000, 150000000) for _ in range(n_datos)],
-        "ID_Ruta": [f"RT{random.randint(1, n_datos):03}" for _ in range(n_datos)]
+        "ID_Ruta": [f"RT{random.randint(1, n_rutas):03}" for _ in range(n_datos)]
     },
     "Facturas": {
         "ID_Factura": [f"FAC{i:03}" for i in range(1, n_datos + 1)],
-        "Fecha": generar_fechas(n_datos, 6),
+        "Fecha": generar_fechas(n_datos),
         "ID_Cliente": [f"CLI{random.randint(1, n_datos):03}" for _ in range(n_datos)],
         "Monto": [random.randint(800000, 12000000) for _ in range(n_datos)],
         "Estado": random.choices(["Pagada", "Pendiente", "Vencida"], weights=[0.6, 0.3, 0.1], k=n_datos)
@@ -98,7 +103,7 @@ data_dict = {
     },
     "Gastos": {
         "ID_Gasto": [f"GAS{i:03}" for i in range(1, n_datos + 1)],
-        "Fecha": generar_fechas(n_datos, 4),
+        "Fecha": generar_fechas(n_datos, fecha_inicio=datetime(2022, 1, 1), fecha_fin=datetime(2024, 12, 31)),
         "Categoria": random.choices(["Combustible", "Mantenimiento", "Peajes", "Seguros", "Repuestos", "Viaticos", "Nomina"], k=n_datos),
         "Monto": [random.randint(50000, 3500000) for _ in range(n_datos)],
         "Proveedor": [f"Suministros {random.randint(1, n_datos):03}" for _ in range(n_datos)],
@@ -106,9 +111,15 @@ data_dict = {
     }
 }
 
+# Generar las 10 rutas entre capitales principales, evitando que origen == destino
+for _ in range(n_rutas):
+    origen, destino = random.sample(capitales_principales, 2)
+    data_dict["Rutas"]["Origen"].append(origen)
+    data_dict["Rutas"]["Destino"].append(destino)
+
 with pd.ExcelWriter("Datos_Logistica_100_Registros.xlsx") as writer:
     for sheet_name, data in data_dict.items():
         df = pd.DataFrame(data)
         df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-print(f"¡Éxito! Archivo 'Datos_Logistica_100_Registros.xlsx' generado con {n_datos} registros rrellenando todos los campos por tabla.")
+print(f"¡Éxito! Archivo 'Datos_Logistica_100_Registros.xlsx' generado con {n_datos} registros (10 rutas entre capitales principales, fechas 2022-2024).")

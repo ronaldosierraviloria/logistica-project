@@ -1,0 +1,245 @@
+:root {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-hover: #f1f5f9;
+  --color-sidebar-active: #eef2ff;
+  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  font-family: var(--font-main);
+}
+
+body {
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F4F4F4;
+}
+
+/* Sidebar transitions */
+.sidebar-enter { transform: translateX(-100%); }
+.sidebar-enter-active { transform: translateX(0); transition: transform 300ms ease-out; }
+.sidebar-exit { transform: translateX(0); }
+.sidebar-exit-active { transform: translateX(-100%); transition: transform 300ms ease-in; }
+
+/* Page transitions */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pageOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+.page-animate-in { animation: pageIn 0.35s ease-out forwards; }
+.page-animate-out { animation: pageOut 0.2s ease-in forwards; }
+
+/* Toast animation */
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+.toast-enter { animation: slideInRight 0.3s ease-out forwards; }
+.toast-exit { animation: slideOutRight 0.3s ease-in forwards; }
+
+/* Chart containers */
+.chart-container { position: relative; width: 100%; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* Table row hover */
+.table-row-hover { transition: background-color 0.15s ease; }
+.table-row-hover:hover { background-color: rgba(99, 102, 241, 0.03); }
+.dark .table-row-hover:hover { background-color: rgba(99, 102, 241, 0.06); }
+
+/* KPI card accent bar */
+.kpi-accent { position: relative; overflow: hidden; }
+.kpi-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+  transition: opacity 0.2s ease;
+}
+.kpi-accent-blue::before { background: #6366f1; }
+.kpi-accent-green::before { background: #10b981; }
+.kpi-accent-amber::before { background: #f59e0b; }
+.kpi-accent-red::before { background: #f43f5e; }
+.kpi-accent-purple::before { background: #8b5cf6; }
+
+/* Progress bar animation */
+@keyframes progressFill {
+  from { width: 0%; }
+}
+.progress-animate { animation: progressFill 1s ease-out forwards; }
+
+/* ==================== Sidebar Collapse ==================== */
+.sidebar-collapsed #sidebar {
+  transform: translateX(-100%) !important;
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: 0 !important;
+}
+
+@media (min-width: 1024px) {
+  .sidebar-collapsed #sidebar {
+    transform: translateX(-100%) !important;
+  }
+  
+  .sidebar-collapsed .main-content {
+    margin-left: 0 !important;
+  }
+}
+
+/* Smooth transitions for sidebar collapse */
+#sidebar,
+.main-content {
+  transition: all 0.3s ease-out;
+}
+
+/* Sidebar text visibility on collapse */
+.sidebar-collapsed .sidebar-text,
+.sidebar-collapsed .sidebar-text-group {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.sidebar-text,
+.sidebar-text-group {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease 0.05s, visibility 0.25s ease 0.05s;
+}
+
+/* ==================== Logo Animations ==================== */
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.logo-animate {
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+/* Logo glow pulse */
+@keyframes logoGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.25); }
+  50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+}
+.logo-glow {
+  animation: logoGlow 3s ease-in-out infinite;
+}
+
+/* ==================== Collapse Button ==================== */
+.collapse-btn-icon {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+}
+.sidebar-collapsed .collapse-btn-icon {
+  transform: rotate(180deg);
+}
+
+/* Collapse button tooltip */
+#sidebar-collapse-btn {
+  position: relative;
+}
+#sidebar-collapse-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  background: #1e293b;
+  color: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 100;
+}
+#sidebar-collapse-btn:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* Focus ring consistency */
+*:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Notification panel animations */
+@keyframes notifPanelIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes notifPanelOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-8px) scale(0.96); }
+}
+.notification-panel-animate {
+  transform-origin: top right;
+  animation: notifPanelIn 0.2s ease-out forwards;
+}
+.notification-panel-animate.closing {
+  animation: notifPanelOut 0.15s ease-in forwards;
+}
+
+/* Notification item enter */
+@keyframes notifItemIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.notif-item-enter {
+  animation: notifItemIn 0.25s ease-out forwards;
+}
+
+/* Bell shake on new notification */
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(4deg); }
+  90% { transform: rotate(-2deg); }
+}
+.bell-shake {
+  animation: bellShake 0.6s ease-in-out;
+}
+
+/* Notification unread dot pulse */
+@keyframes notifPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.notif-unread-pulse {
+  animation: notifPulse 2s ease-in-out infinite;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(99, 102, 241, 0.15);
+  color: inherit;
+}

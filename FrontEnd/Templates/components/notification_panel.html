@@ -1,0 +1,47 @@
+<!-- Notification Bell + Dropdown Panel -->
+<div class="relative" id="notification-wrapper">
+    <!-- Bell Button -->
+    <button id="notification-btn" class="relative p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Notificaciones">
+        <i data-lucide="bell" class="w-4 h-4"></i>
+        <span id="notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 animate-pulse">0</span>
+    </button>
+
+    <!-- Dropdown Panel -->
+    <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 z-50 notification-panel-animate">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+            <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-white">Notificaciones</h3>
+                <span id="notification-count-badge" class="hidden px-1.5 py-0.5 bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 text-[10px] font-bold rounded-full">0</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <button id="notification-mark-all" class="text-[11px] font-medium text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 transition-colors px-2 py-1 rounded hover:bg-primary-50 dark:hover:bg-primary-500/10" title="Marcar todas como leídas">
+                    Marcar leídas
+                </button>
+                <button id="notification-clear" class="text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" title="Limpiar leídas">
+                    Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Notification List -->
+        <div id="notification-list" class="max-h-80 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-700/50">
+            <!-- Empty state -->
+            <div id="notification-empty" class="flex flex-col items-center justify-center py-8 px-4">
+                <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-3">
+                    <i data-lucide="bell-off" class="w-5 h-5 text-slate-300 dark:text-slate-500"></i>
+                </div>
+                <p class="text-sm font-medium text-slate-400 dark:text-slate-500">Sin notificaciones</p>
+                <p class="text-xs text-slate-300 dark:text-slate-600 mt-1">Los eventos del sistema aparecerán aquí</p>
+            </div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="notification-loading" class="hidden flex items-center justify-center py-6">
+            <div class="flex items-center gap-2 text-slate-400">
+                <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <span class="text-xs font-medium">Cargando...</span>
+            </div>
+        </div>
+    </div>
+</div>

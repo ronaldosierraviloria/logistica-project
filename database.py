@@ -96,6 +96,29 @@ def init_db():
             Estado TEXT
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Notificaciones (
+            ID_Notificacion INTEGER PRIMARY KEY AUTOINCREMENT,
+            ID_Usuario INTEGER,
+            Tipo TEXT NOT NULL,
+            Titulo TEXT NOT NULL,
+            Mensaje TEXT NOT NULL,
+            Icono TEXT DEFAULT 'bell',
+            Leida INTEGER DEFAULT 0,
+            Fecha_Creacion TEXT DEFAULT (datetime('now', 'localtime')),
+            FOREIGN KEY (ID_Usuario) REFERENCES Usuario (IDUsuario)
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Configuracion (
+            ID_Config INTEGER PRIMARY KEY AUTOINCREMENT,
+            ID_Usuario INTEGER,
+            Clave TEXT NOT NULL,
+            Valor TEXT NOT NULL,
+            UNIQUE(ID_Usuario, Clave),
+            FOREIGN KEY (ID_Usuario) REFERENCES Usuario (IDUsuario)
+        )
+    ''')
     conn.commit()
     conn.close()
     print("Base de datos y tablas creadas exitosamente.")
