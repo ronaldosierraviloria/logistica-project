@@ -158,37 +158,37 @@ def index():
     conn = get_db_connection()
     
     totales = {
-        'empleados': db_execute(conn, 'SELECT COUNT(*) FROM Empleados', fetch='count'),
-        'vehiculos': db_execute(conn, 'SELECT COUNT(*) FROM Vehiculos', fetch='count'),
-        'rutas': db_execute(conn, 'SELECT COUNT(*) FROM Rutas', fetch='count'),
-        'clientes': db_execute(conn, 'SELECT COUNT(*) FROM Clientes', fetch='count')
+        'empleados': db_execute_safe(conn, 'SELECT COUNT(*) FROM Empleados', fetch='count', default=0),
+        'vehiculos': db_execute_safe(conn, 'SELECT COUNT(*) FROM Vehiculos', fetch='count', default=0),
+        'rutas': db_execute_safe(conn, 'SELECT COUNT(*) FROM Rutas', fetch='count', default=0),
+        'clientes': db_execute_safe(conn, 'SELECT COUNT(*) FROM Clientes', fetch='count', default=0)
     }
 
     if not tabla_seleccionada:
-        row = db_execute(conn, "SELECT SUM(Monto) FROM Facturas WHERE Estado='Pagada'", fetch='one')
+        row = db_execute_safe(conn, "SELECT SUM(Monto) FROM Facturas WHERE Estado='Pagada'", fetch='one')
         ingresos_total = row['sum'] if (IS_POSTGRES and row) else (row[0] if row and row[0] else 0)
         if not IS_POSTGRES and row:
             ingresos_total = row[0] if row[0] else 0
 
-        cargas_raw = db_execute(conn, 'SELECT Tipo_Carga, COUNT(*) as cant FROM Cargas GROUP BY Tipo_Carga', fetch='all')
+        cargas_raw = db_execute_safe(conn, 'SELECT Tipo_Carga, COUNT(*) as cant FROM Cargas GROUP BY Tipo_Carga', fetch='all', default=[])
         if IS_POSTGRES:
             chart_cargas = {'labels': [r['tipo_carga'] for r in cargas_raw], 'values': [r['cant'] for r in cargas_raw]}
         else:
             chart_cargas = {'labels': [r['Tipo_Carga'] for r in cargas_raw], 'values': [r['cant'] for r in cargas_raw]}
 
-        facturas_raw = db_execute(conn, 'SELECT Fecha, SUM(Monto) as total FROM Facturas GROUP BY Fecha ORDER BY Fecha ASC', fetch='all')
+        facturas_raw = db_execute_safe(conn, 'SELECT Fecha, SUM(Monto) as total FROM Facturas GROUP BY Fecha ORDER BY Fecha ASC', fetch='all', default=[])
         if IS_POSTGRES:
             chart_ingresos = {'labels': [r['fecha'] for r in facturas_raw], 'values': [r['total'] for r in facturas_raw]}
         else:
             chart_ingresos = {'labels': [r['Fecha'] for r in facturas_raw], 'values': [r['total'] for r in facturas_raw]}
 
-        recientes = db_execute(conn, '''
+        recientes = db_execute_safe(conn, '''
             SELECT f.ID_Factura, c.Nombre, f.Monto, f.Estado 
             FROM Facturas f 
             JOIN Clientes c ON f.ID_Cliente = c.ID_Cliente 
             ORDER BY f.ID_Factura DESC LIMIT 4
-        ''', fetch='all')
-        if not IS_POSTGRES:
+        ''', fetch='all', default=[])
+        if not IS_POSTGRES and recientes:
             recientes = [dict(r) for r in recientes]
 
         excel_filename = session.get('excel_filename')
@@ -977,6 +977,7 @@ def before_request_handler():
         if IS_POSTGRES:
             _ensure_notificaciones_table()
             _ensure_configuracion_table()
+            ensure_all_tables()
         elif not os.environ.get('VERCEL'):
             from database import init_db
             db_path = os.path.join(base_dir, 'logistica.db')
@@ -1063,6 +1064,125 @@ def api_clear_notifications():
     )
     conn.close()
     return jsonify({'ok': True})
+
+def db_execute_safe(conn, query, params=None, fetch='all', default=None):
+    """Execute a query, returning default value on error (e.g. missing table)."""
+    try:
+        return db_execute(conn, query, params, fetch)
+    except Exception:
+        return default
+
+def sql_table_exists(conn, table_name):
+    """Check if a table exists in the database."""
+    try:
+        cursor = conn.cursor()
+        if IS_POSTGRES:
+            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = %s)", (table_name,))
+        else:
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+        return cursor.fetchone() is not None
+    except Exception:
+        return False
+
+def ensure_all_tables():
+    """Creates missing tables in PostgreSQL (Supabase)."""
+    if not IS_POSTGRES:
+        return
+    try:
+        conn = get_db_connection()
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Empleados (
+                ID_Empleado TEXT PRIMARY KEY,
+                Nombre TEXT NOT NULL,
+                Apellido TEXT NOT NULL,
+                Direccion TEXT,
+                Telefono TEXT,
+                Salario REAL,
+                Cargo TEXT,
+                Fecha_Ingreso TEXT
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Vehiculos (
+                ID_Vehiculo TEXT PRIMARY KEY,
+                Marca TEXT,
+                Modelo TEXT,
+                Anio INTEGER,
+                Placa TEXT UNIQUE,
+                Tipo_Vehiculo TEXT,
+                Capacidad_Carga REAL
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Rutas (
+                ID_Ruta TEXT PRIMARY KEY,
+                Origen TEXT,
+                Destino TEXT,
+                Distancia REAL,
+                Tiempo_Entrega TEXT,
+                Costo_Transporte REAL
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Clientes (
+                ID_Cliente TEXT PRIMARY KEY,
+                Nombre TEXT NOT NULL,
+                Direccion TEXT,
+                Telefono TEXT,
+                Email TEXT
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Cargas (
+                ID_Carga TEXT PRIMARY KEY,
+                Tipo_Carga TEXT,
+                Peso REAL,
+                Volumen REAL,
+                Valor_Carga REAL,
+                ID_Ruta TEXT,
+                FOREIGN KEY (ID_Ruta) REFERENCES Rutas (ID_Ruta)
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Facturas (
+                ID_Factura TEXT PRIMARY KEY,
+                Fecha TEXT,
+                ID_Cliente TEXT,
+                Monto REAL,
+                Estado TEXT,
+                FOREIGN KEY (ID_Cliente) REFERENCES Clientes (ID_Cliente)
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Proveedores (
+                ID_Proveedor TEXT PRIMARY KEY,
+                Nombre TEXT,
+                Direccion TEXT,
+                Telefono TEXT,
+                Email TEXT
+            )
+        ''', fetch='none')
+        db_execute(conn, '''
+            CREATE TABLE IF NOT EXISTS Gastos (
+                ID_Gasto TEXT PRIMARY KEY,
+                Fecha TEXT,
+                Categoria TEXT,
+                Monto REAL,
+                Proveedor TEXT,
+                Estado TEXT
+            )
+        ''', fetch='none')
+        conn.close()
+    except Exception as e:
+        print(f"Error ensuring tables: {e}")
+
+@app.errorhandler(500)
+def internal_error(e):
+    return f"Error interno del servidor: {e}", 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
