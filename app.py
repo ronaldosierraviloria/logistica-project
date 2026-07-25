@@ -18,6 +18,16 @@ app.secret_key = "supersecretkey"
 DATABASE_URL = os.environ.get('DATABASE_URL')
 IS_POSTGRES = bool(DATABASE_URL)
 
+class CaseInsensitiveDict(dict):
+    def __getitem__(self, key):
+        return super().__getitem__(key.lower())
+    def __contains__(self, key):
+        return super().__contains__(key.lower())
+    def get(self, key, default=None):
+        return super().get(key.lower(), default)
+    def __setitem__(self, key, value):
+        super().__setitem__(key.lower(), value)
+
 if IS_POSTGRES:
     import psycopg2
     import psycopg2.extras
@@ -29,7 +39,11 @@ else:
 def get_db_connection():
     """Returns a database connection. PostgreSQL if DATABASE_URL is set, else SQLite."""
     if IS_POSTGRES:
-        conn = psycopg2.connect(DATABASE_URL)
+        db_url = DATABASE_URL
+        if "sslmode=" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url = f"{db_url}{separator}sslmode=require"
+        conn = psycopg2.connect(db_url)
         conn.autocommit = False
         return conn
     else:
@@ -56,13 +70,13 @@ def db_execute(conn, query, params=None, fetch='all'):
             return None
         if IS_POSTGRES:
             col_names = [desc[0] for desc in cursor.description]
-            return dict(zip(col_names, row))
+            return CaseInsensitiveDict(zip(col_names, row))
         return row
     elif fetch == 'all':
         rows = cursor.fetchall()
         if IS_POSTGRES:
             col_names = [desc[0] for desc in cursor.description] if cursor.description else []
-            return [dict(zip(col_names, r)) for r in rows]
+            return [CaseInsensitiveDict(zip(col_names, r)) for r in rows]
         return rows
     elif fetch == 'count':
         row = cursor.fetchone()

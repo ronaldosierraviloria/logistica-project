@@ -1,6 +1,16 @@
 import os
 import sqlite3
 
+class CaseInsensitiveDict(dict):
+    def __getitem__(self, key):
+        return super().__getitem__(key.lower())
+    def __contains__(self, key):
+        return super().__contains__(key.lower())
+    def get(self, key, default=None):
+        return super().get(key.lower(), default)
+    def __setitem__(self, key, value):
+        super().__setitem__(key.lower(), value)
+
 def get_db_url():
     return os.environ.get('DATABASE_URL')
 
@@ -44,7 +54,7 @@ def row_to_dict(row, cursor=None):
         return None
     if get_db_url() and cursor:
         col_names = [desc[0] for desc in cursor.description]
-        return dict(zip(col_names, row))
+        return CaseInsensitiveDict(zip(col_names, row))
     elif hasattr(row, 'keys'):
         return dict(row)
     return row
@@ -53,7 +63,7 @@ def rows_to_dicts(rows, cursor=None):
     """Convert multiple database rows to a list of dictionaries."""
     if get_db_url() and cursor:
         col_names = [desc[0] for desc in cursor.description]
-        return [dict(zip(col_names, r)) for r in rows]
+        return [CaseInsensitiveDict(zip(col_names, r)) for r in rows]
     return [dict(r) if hasattr(r, 'keys') else r for r in rows]
 
 def init_db():
