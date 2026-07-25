@@ -544,58 +544,58 @@ def operaciones():
     total_cargas = db_execute(conn, 'SELECT COUNT(*) FROM Cargas', fetch='count')
     total_clientes = db_execute(conn, 'SELECT COUNT(*) FROM Clientes', fetch='count')
     
-    peso_total = db_execute(conn, 'SELECT SUM(Peso) FROM Cargas', fetch='one')
-    peso_total = peso_total['sum'] if (IS_POSTGRES and peso_total) else (peso_total[0] if peso_total and peso_total[0] else 0)
+    row_peso = db_execute(conn, 'SELECT SUM(Peso) FROM Cargas', fetch='one')
+    peso_total = row_peso['sum'] if (IS_POSTGRES and row_peso and row_peso['sum'] is not None) else (row_peso[0] if row_peso and row_peso[0] is not None else 0) if row_peso else 0
     
-    valor_total = db_execute(conn, 'SELECT SUM(Valor_Carga) FROM Cargas', fetch='one')
-    valor_total = valor_total['sum'] if (IS_POSTGRES and valor_total) else (valor_total[0] if valor_total and valor_total[0] else 0)
+    row_val = db_execute(conn, 'SELECT SUM(Valor_Carga) FROM Cargas', fetch='one')
+    valor_total = row_val['sum'] if (IS_POSTGRES and row_val and row_val['sum'] is not None) else (row_val[0] if row_val and row_val[0] is not None else 0) if row_val else 0
     
-    distancia_promedio = db_execute(conn, 'SELECT AVG(Distancia) FROM Rutas', fetch='one')
-    distancia_promedio = distancia_promedio['avg'] if (IS_POSTGRES and distancia_promedio) else (distancia_promedio[0] if distancia_promedio and distancia_promedio[0] else 0)
+    row_dist_avg = db_execute(conn, 'SELECT AVG(Distancia) FROM Rutas', fetch='one')
+    distancia_promedio = row_dist_avg['avg'] if (IS_POSTGRES and row_dist_avg and row_dist_avg['avg'] is not None) else (row_dist_avg[0] if row_dist_avg and row_dist_avg[0] is not None else 0) if row_dist_avg else 0
     
-    distancia_total = db_execute(conn, 'SELECT SUM(Distancia) FROM Rutas', fetch='one')
-    distancia_total = distancia_total['sum'] if (IS_POSTGRES and distancia_total) else (distancia_total[0] if distancia_total and distancia_total[0] else 0)
+    row_dist_sum = db_execute(conn, 'SELECT SUM(Distancia) FROM Rutas', fetch='one')
+    distancia_total = row_dist_sum['sum'] if (IS_POSTGRES and row_dist_sum and row_dist_sum['sum'] is not None) else (row_dist_sum[0] if row_dist_sum and row_dist_sum[0] is not None else 0) if row_dist_sum else 0
     
-    costo_total = db_execute(conn, 'SELECT SUM(Costo_Transporte) FROM Rutas', fetch='one')
-    costo_total = costo_total['sum'] if (IS_POSTGRES and costo_total) else (costo_total[0] if costo_total and costo_total[0] else 0)
+    row_costo = db_execute(conn, 'SELECT SUM(Costo_Transporte) FROM Rutas', fetch='one')
+    costo_total = row_costo['sum'] if (IS_POSTGRES and row_costo and row_costo['sum'] is not None) else (row_costo[0] if row_costo and row_costo[0] is not None else 0) if row_costo else 0
     
     # --- Charts ---
     cargas_raw = db_execute(conn, 'SELECT Tipo_Carga, COUNT(*) as cant FROM Cargas GROUP BY Tipo_Carga ORDER BY cant DESC', fetch='all')
     if IS_POSTGRES:
-        chart_cargas = {'labels': [r['tipo_carga'] for r in cargas_raw], 'values': [r['cant'] for r in cargas_raw]}
+        chart_cargas = {'labels': [str(r['tipo_carga']) for r in cargas_raw], 'values': [int(r['cant']) for r in cargas_raw]}
     else:
-        chart_cargas = {'labels': [r['Tipo_Carga'] for r in cargas_raw], 'values': [r['cant'] for r in cargas_raw]}
+        chart_cargas = {'labels': [str(r['Tipo_Carga']) for r in cargas_raw], 'values': [int(r['cant']) for r in cargas_raw]}
 
     valor_raw = db_execute(conn, 'SELECT Tipo_Carga, SUM(Valor_Carga) as total FROM Cargas GROUP BY Tipo_Carga ORDER BY total DESC', fetch='all')
     if IS_POSTGRES:
-        chart_valor_categoria = {'labels': [r['tipo_carga'] for r in valor_raw], 'values': [r['total'] for r in valor_raw]}
+        chart_valor_categoria = {'labels': [str(r['tipo_carga']) for r in valor_raw], 'values': [float(r['total']) if r['total'] is not None else 0 for r in valor_raw]}
     else:
-        chart_valor_categoria = {'labels': [r['Tipo_Carga'] for r in valor_raw], 'values': [r['total'] for r in valor_raw]}
+        chart_valor_categoria = {'labels': [str(r['Tipo_Carga']) for r in valor_raw], 'values': [float(r['total']) if r['total'] is not None else 0 for r in valor_raw]}
 
     rutas_costo = db_execute(conn, 'SELECT Destino, Costo_Transporte FROM Rutas ORDER BY Costo_Transporte DESC LIMIT 5', fetch='all')
     if IS_POSTGRES:
-        chart_rutas = {'labels': [r['destino'] for r in rutas_costo], 'values': [r['costo_transporte'] for r in rutas_costo]}
+        chart_rutas = {'labels': [str(r['destino']) for r in rutas_costo], 'values': [float(r['costo_transporte']) if r['costo_transporte'] is not None else 0 for r in rutas_costo]}
     else:
-        chart_rutas = {'labels': [r['Destino'] for r in rutas_costo], 'values': [r['Costo_Transporte'] for r in rutas_costo]}
+        chart_rutas = {'labels': [str(r['Destino']) for r in rutas_costo], 'values': [float(r['Costo_Transporte']) if r['Costo_Transporte'] is not None else 0 for r in rutas_costo]}
 
     if IS_POSTGRES:
         rutas_dist = db_execute(conn, "SELECT Origen || ' → ' || Destino as ruta, Distancia FROM Rutas ORDER BY Distancia DESC LIMIT 8", fetch='all')
-        chart_dist_rutas = {'labels': [r['ruta'] for r in rutas_dist], 'values': [r['distancia'] for r in rutas_dist]}
+        chart_dist_rutas = {'labels': [str(r['ruta']) for r in rutas_dist], 'values': [float(r['distancia']) if r['distancia'] is not None else 0 for r in rutas_dist]}
     else:
         rutas_dist = db_execute(conn, 'SELECT Origen || " → " || Destino as ruta, Distancia FROM Rutas ORDER BY Distancia DESC LIMIT 8', fetch='all')
-        chart_dist_rutas = {'labels': [r['ruta'] for r in rutas_dist], 'values': [r['Distancia'] for r in rutas_dist]}
+        chart_dist_rutas = {'labels': [str(r['ruta']) for r in rutas_dist], 'values': [float(r['Distancia']) if r['Distancia'] is not None else 0 for r in rutas_dist]}
 
     clientes_cargas = db_execute(conn, '''
-        SELECT c.Nombre, COUNT(ca.ID_Carga) as cant 
+        SELECT c.Nombre, COUNT(f.ID_Factura) as cant 
         FROM Clientes c 
-        LEFT JOIN Cargas ca ON c.ID_Cliente = ca.ID_Cliente 
-        GROUP BY c.Nombre 
+        LEFT JOIN Facturas f ON c.ID_Cliente = f.ID_Cliente 
+        GROUP BY c.Nombre, c.ID_Cliente 
         ORDER BY cant DESC LIMIT 6
     ''', fetch='all')
     if IS_POSTGRES:
-        chart_clientes_cargas = {'labels': [r['nombre'] for r in clientes_cargas], 'values': [r['cant'] for r in clientes_cargas]}
+        chart_clientes_cargas = {'labels': [str(r['nombre']) for r in clientes_cargas], 'values': [int(r['cant']) for r in clientes_cargas]}
     else:
-        chart_clientes_cargas = {'labels': [r['Nombre'] for r in clientes_cargas], 'values': [r['cant'] for r in clientes_cargas]}
+        chart_clientes_cargas = {'labels': [str(r['Nombre']) for r in clientes_cargas], 'values': [int(r['cant']) for r in clientes_cargas]}
 
     datos_tabla = []
     columnas_tabla = []
@@ -668,9 +668,9 @@ def gestion_comercial():
         conditions.append("Fecha LIKE %s")
         params.append(f"{anio_filtro}-{mes_filtro}%")
     elif mes_filtro:
-        conditions.append("substr(Fecha,1,4) = %s")
+        conditions.append("substr(CAST(Fecha AS TEXT),1,4) = %s")
         params.append("2024")
-        conditions.append("substr(Fecha,6,2) = %s")
+        conditions.append("substr(CAST(Fecha AS TEXT),6,2) = %s")
         params.append(mes_filtro)
     elif anio_filtro:
         conditions.append("Fecha LIKE %s")
@@ -681,7 +681,7 @@ def gestion_comercial():
         if trimestre_filtro in trimestre_meses:
             meses_t = trimestre_meses[trimestre_filtro]
             placeholders = ','.join(['%s' for _ in meses_t])
-            conditions.append(f"substr(Fecha,6,2) IN ({placeholders})")
+            conditions.append(f"substr(CAST(Fecha AS TEXT),6,2) IN ({placeholders})")
             params.extend(meses_t)
     
     query_where = "WHERE " + " AND ".join(conditions) if conditions else ""
@@ -689,10 +689,20 @@ def gestion_comercial():
 
     # --- KPIs principales ---
     row_ing = db_execute(conn, f'SELECT SUM(Monto) FROM Facturas {query_where}', params if params else None, fetch='one')
-    ingresos = row_ing['sum'] if (IS_POSTGRES and row_ing) else (row_ing[0] if row_ing and row_ing[0] else 0)
+    ingresos = 0
+    if row_ing:
+        val_ing = row_ing['sum'] if IS_POSTGRES else (row_ing[0] if hasattr(row_ing, '__getitem__') else None)
+        if val_ing is not None:
+            try: ingresos = float(val_ing)
+            except (ValueError, TypeError): ingresos = 0
     
     row_gas = db_execute(conn, f'SELECT SUM(Monto) FROM Gastos {query_where}', params if params else None, fetch='one')
-    gastos = row_gas['sum'] if (IS_POSTGRES and row_gas) else (row_gas[0] if row_gas and row_gas[0] else 0)
+    gastos = 0
+    if row_gas:
+        val_gas = row_gas['sum'] if IS_POSTGRES else (row_gas[0] if hasattr(row_gas, '__getitem__') else None)
+        if val_gas is not None:
+            try: gastos = float(val_gas)
+            except (ValueError, TypeError): gastos = 0
     
     utilidad = ingresos - gastos
     margen = (utilidad / ingresos * 100) if ingresos > 0 else 0
@@ -714,30 +724,32 @@ def gestion_comercial():
         mes_anterior = f"{int(mes_filtro)-1:02d}" if int(mes_filtro) > 1 else None
         if mes_anterior:
             ing_mes_ant = db_execute(conn, 'SELECT SUM(Monto) FROM Facturas WHERE Fecha LIKE %s', (f"{anio_filtro}-{mes_anterior}%",), fetch='one')
-            ing_mes_ant = ing_mes_ant['sum'] if (IS_POSTGRES and ing_mes_ant) else (ing_mes_ant[0] if ing_mes_ant and ing_mes_ant[0] else 0)
-            crecimiento_ingresos = ((ingresos - ing_mes_ant) / ing_mes_ant * 100) if ing_mes_ant > 0 else 0
+            val_ant = ing_mes_ant['sum'] if (IS_POSTGRES and ing_mes_ant) else (ing_mes_ant[0] if ing_mes_ant and ing_mes_ant[0] else 0) if ing_mes_ant else 0
+            val_ant = float(val_ant) if val_ant is not None else 0
+            crecimiento_ingresos = ((ingresos - val_ant) / val_ant * 100) if val_ant > 0 else 0
     elif mes_filtro:
         mes_anterior = f"{int(mes_filtro)-1:02d}" if int(mes_filtro) > 1 else None
         if mes_anterior:
-            ing_mes_ant = db_execute(conn, "SELECT SUM(Monto) FROM Facturas WHERE substr(Fecha,1,4) = '2024' AND substr(Fecha,6,2) = %s", (mes_anterior,), fetch='one')
-            ing_mes_ant = ing_mes_ant['sum'] if (IS_POSTGRES and ing_mes_ant) else (ing_mes_ant[0] if ing_mes_ant and ing_mes_ant[0] else 0)
-            crecimiento_ingresos = ((ingresos - ing_mes_ant) / ing_mes_ant * 100) if ing_mes_ant > 0 else 0
+            ing_mes_ant = db_execute(conn, "SELECT SUM(Monto) FROM Facturas WHERE substr(CAST(Fecha AS TEXT),1,4) = '2024' AND substr(CAST(Fecha AS TEXT),6,2) = %s", (mes_anterior,), fetch='one')
+            val_ant = ing_mes_ant['sum'] if (IS_POSTGRES and ing_mes_ant) else (ing_mes_ant[0] if ing_mes_ant and ing_mes_ant[0] else 0) if ing_mes_ant else 0
+            val_ant = float(val_ant) if val_ant is not None else 0
+            crecimiento_ingresos = ((ingresos - val_ant) / val_ant * 100) if val_ant > 0 else 0
     else:
         meses_data = db_execute(conn, '''
-            SELECT substr(Fecha,1,7) as mes, SUM(Monto) as total 
+            SELECT substr(CAST(Fecha AS TEXT),1,7) as mes, SUM(Monto) as total 
             FROM Facturas GROUP BY mes ORDER BY mes DESC LIMIT 2
         ''', fetch='all')
         if len(meses_data) >= 2:
-            t0 = meses_data[0]['total'] if IS_POSTGRES else meses_data[0]['total']
-            t1 = meses_data[1]['total'] if IS_POSTGRES else meses_data[1]['total']
+            t0 = float(meses_data[0]['total']) if meses_data[0]['total'] is not None else 0
+            t1 = float(meses_data[1]['total']) if meses_data[1]['total'] is not None else 0
             crecimiento_ingresos = ((t0 - t1) / t1 * 100) if t1 > 0 else 0
 
     # --- Charts ---
     cobranza = db_execute(conn, f'SELECT Estado, SUM(Monto) as total FROM Facturas {query_where} GROUP BY Estado', params if params else None, fetch='all')
     if IS_POSTGRES:
-        chart_cobranza = {'labels': [r['estado'] for r in cobranza], 'values': [r['total'] for r in cobranza]}
+        chart_cobranza = {'labels': [str(r['estado']) for r in cobranza], 'values': [float(r['total']) if r['total'] is not None else 0 for r in cobranza]}
     else:
-        chart_cobranza = {'labels': [r['Estado'] for r in cobranza], 'values': [r['total'] for r in cobranza]}
+        chart_cobranza = {'labels': [str(r['Estado']) for r in cobranza], 'values': [float(r['total']) if r['total'] is not None else 0 for r in cobranza]}
 
     top_clientes = db_execute(conn, f'''
         SELECT c.Nombre, SUM(f.Monto) as total FROM Facturas f 
@@ -745,27 +757,27 @@ def gestion_comercial():
         {query_where} GROUP BY c.Nombre ORDER BY total DESC LIMIT 6
     ''', params if params else None, fetch='all')
     if IS_POSTGRES:
-        chart_top_clientes = {'labels': [r['nombre'] for r in top_clientes], 'values': [r['total'] for r in top_clientes]}
+        chart_top_clientes = {'labels': [str(r['nombre']) for r in top_clientes], 'values': [float(r['total']) if r['total'] is not None else 0 for r in top_clientes]}
     else:
-        chart_top_clientes = {'labels': [r['Nombre'] for r in top_clientes], 'values': [r['total'] for r in top_clientes]}
+        chart_top_clientes = {'labels': [str(r['Nombre']) for r in top_clientes], 'values': [float(r['total']) if r['total'] is not None else 0 for r in top_clientes]}
 
     ingresos_mensuales = db_execute(conn, '''
-        SELECT substr(Fecha,1,7) as mes, SUM(Monto) as total 
+        SELECT substr(CAST(Fecha AS TEXT),1,7) as mes, SUM(Monto) as total 
         FROM Facturas GROUP BY mes ORDER BY mes
     ''', fetch='all')
     gastos_mensuales = db_execute(conn, '''
-        SELECT substr(Fecha,1,7) as mes, SUM(Monto) as total 
+        SELECT substr(CAST(Fecha AS TEXT),1,7) as mes, SUM(Monto) as total 
         FROM Gastos GROUP BY mes ORDER BY mes
     ''', fetch='all')
     
     meses_dict = {}
     for r in ingresos_mensuales:
-        m = r['mes'] if IS_POSTGRES else r['mes']
-        t = r['total'] if IS_POSTGRES else r['total']
+        m = str(r['mes']) if IS_POSTGRES else str(r['mes'])
+        t = float(r['total']) if r['total'] is not None else 0
         meses_dict[m] = {'ingresos': t, 'gastos': 0}
     for r in gastos_mensuales:
-        m = r['mes'] if IS_POSTGRES else r['mes']
-        t = r['total'] if IS_POSTGRES else r['total']
+        m = str(r['mes']) if IS_POSTGRES else str(r['mes'])
+        t = float(r['total']) if r['total'] is not None else 0
         if m in meses_dict:
             meses_dict[m]['gastos'] = t
         else:
@@ -774,7 +786,7 @@ def gestion_comercial():
     meses_ordenados = sorted(meses_dict.keys())
     meses_nombres_corto = {'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'}
     chart_trend = {
-        'labels': [meses_nombres_corto.get(m.split('-')[1], m.split('-')[1]) for m in meses_ordenados],
+        'labels': [meses_nombres_corto.get(m.split('-')[1], m.split('-')[1]) if '-' in str(m) else str(m) for m in meses_ordenados],
         'ingresos': [meses_dict[m]['ingresos'] for m in meses_ordenados],
         'gastos': [meses_dict[m]['gastos'] for m in meses_ordenados]
     }
@@ -784,9 +796,9 @@ def gestion_comercial():
         FROM Gastos GROUP BY Categoria ORDER BY total DESC
     ''', fetch='all')
     if IS_POSTGRES:
-        chart_gastos_cat = {'labels': [r['categoria'] for r in gastos_cat], 'values': [r['total'] for r in gastos_cat]}
+        chart_gastos_cat = {'labels': [str(r['categoria']) for r in gastos_cat], 'values': [float(r['total']) if r['total'] is not None else 0 for r in gastos_cat]}
     else:
-        chart_gastos_cat = {'labels': [r['Categoria'] for r in gastos_cat], 'values': [r['total'] for r in gastos_cat]}
+        chart_gastos_cat = {'labels': [str(r['Categoria']) for r in gastos_cat], 'values': [float(r['total']) if r['total'] is not None else 0 for r in gastos_cat]}
 
     margenes_mensuales = []
     for m in meses_ordenados:
