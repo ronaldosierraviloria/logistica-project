@@ -278,15 +278,35 @@
     </div>
 </div>
 
-<!-- Sync config to localStorage -->
+<!-- Sync config to localStorage and apply theme immediately -->
 <script>
     (function() {
         var cfg = {{ config | tojson | safe }};
-        if (cfg.tema) localStorage.setItem('theme', cfg.tema);
+        if (cfg.tema) {
+            localStorage.setItem('theme', cfg.tema);
+            document.documentElement.classList.toggle('dark', cfg.tema === 'dark');
+            var meta = document.querySelector('meta[name="color-scheme"]');
+            if (meta) meta.setAttribute('content', cfg.tema === 'dark' ? 'dark' : 'light');
+        }
         if (cfg.filas_tabla) localStorage.setItem('filas_tabla', cfg.filas_tabla);
         if (cfg.notif_upload) localStorage.setItem('notif_upload', cfg.notif_upload);
         if (cfg.notif_eliminar) localStorage.setItem('notif_eliminar', cfg.notif_eliminar);
         if (cfg.notif_registro) localStorage.setItem('notif_registro', cfg.notif_registro);
     })();
+
+    // Apply theme immediately when a radio button is changed (without waiting for form submit)
+    document.querySelectorAll('input[name="tema"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                var newTheme = this.value;
+                localStorage.setItem('theme', newTheme);
+                document.documentElement.classList.toggle('dark', newTheme === 'dark');
+                var meta = document.querySelector('meta[name="color-scheme"]');
+                if (meta) meta.setAttribute('content', newTheme === 'dark' ? 'dark' : 'light');
+                // Update Lucide icons if available
+                if (window.lucide) lucide.createIcons();
+            }
+        });
+    });
 </script>
 {% endblock %}

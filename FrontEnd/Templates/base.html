@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logistica Dashboard | Sincelejo S.A.S</title>
+    <meta name="color-scheme" content="light dark">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -44,8 +45,15 @@
         }
     </script>
     <script>
-        const theme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.classList.toggle('dark', theme === 'dark');
+        (function() {
+            var theme = localStorage.getItem('theme');
+            if (!theme) {
+                theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            }
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            var meta = document.querySelector('meta[name="color-scheme"]');
+            if (meta) meta.setAttribute('content', theme === 'dark' ? 'dark' : 'light');
+        })();
     </script>
 </head>
 <body class="bg-surface dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen font-sans antialiased">
@@ -142,8 +150,13 @@
                     </div>
                 </div>
 
-                <!-- Right: notifications + profile -->
+                <!-- Right: theme toggle + notifications + profile -->
                 <div class="flex items-center gap-1.5">
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Cambiar tema">
+                        <i id="theme-toggle-icon" data-lucide="moon" class="w-5 h-5"></i>
+                    </button>
+
                     {% include 'components/notification_panel.html' %}
 
                     <div class="relative">

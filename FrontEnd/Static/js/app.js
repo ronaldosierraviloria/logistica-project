@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const res = await fetch('/api/configuracion');
             if (!res.ok) return;
             const config = await res.json();
-            if (config.tema) localStorage.setItem('theme', config.tema);
+            // Theme is already synced by inline <script> in base.html — don't overwrite
             if (config.sidebar_colapsado) localStorage.setItem('sidebar_collapsed', config.sidebar_colapsado);
             if (config.animaciones) localStorage.setItem('animaciones', config.animaciones);
             if (config.filas_tabla) localStorage.setItem('filas_tabla', config.filas_tabla);
