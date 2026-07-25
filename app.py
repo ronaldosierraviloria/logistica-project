@@ -975,8 +975,32 @@ def api_get_notificaciones():
         (session['user_id'],), fetch='count', default=0
     )
     conn.close()
+
+    formatted_notifs = []
+    for n in (notifs or []):
+        if hasattr(n, 'get'):
+            item_id = n.get('id_notificacion') if 'id_notificacion' in n else n.get('ID_Notificacion')
+            item_tipo = n.get('tipo') if 'tipo' in n else n.get('Tipo')
+            item_titulo = n.get('titulo') if 'titulo' in n else n.get('Titulo')
+            item_mensaje = n.get('mensaje') if 'mensaje' in n else n.get('Mensaje')
+            item_icono = n.get('icono') if 'icono' in n else n.get('Icono')
+            item_leida = n.get('leida') if 'leida' in n else n.get('Leida')
+            item_fecha = n.get('fecha_creacion') if 'fecha_creacion' in n else n.get('Fecha_Creacion')
+        else:
+            item_id, item_tipo, item_titulo, item_mensaje, item_icono, item_leida, item_fecha = n[:7]
+
+        formatted_notifs.append({
+            'ID_Notificacion': item_id,
+            'Tipo': item_tipo,
+            'Titulo': item_titulo,
+            'Mensaje': item_mensaje,
+            'Icono': item_icono,
+            'Leida': bool(item_leida) if item_leida is not None else False,
+            'Fecha_Creacion': str(item_fecha) if item_fecha is not None else ''
+        })
+
     return jsonify({
-        'notificaciones': notifs or [],
+        'notificaciones': formatted_notifs,
         'no_leidas': no_leidas or 0
     })
 

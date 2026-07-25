@@ -242,12 +242,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderNotifItem(n) {
-        const icon = NOTIF_ICON_MAP[n.Icono] || 'bell';
-        const colorClass = NOTIF_COLOR_MAP[n.Tipo] || NOTIF_COLOR_MAP['bell'];
-        const unread = !n.Leida;
+        const notifId = n.ID_Notificacion !== undefined ? n.ID_Notificacion : n.id_notificacion;
+        const icon = NOTIF_ICON_MAP[n.Icono || n.icono] || 'bell';
+        const colorClass = NOTIF_COLOR_MAP[n.Tipo || n.tipo] || NOTIF_COLOR_MAP['bell'];
+        const unread = !(n.Leida || n.leida);
+        const titulo = n.Titulo || n.titulo || 'Notificación';
+        const mensaje = n.Mensaje || n.mensaje || '';
+        const fecha = n.Fecha_Creacion || n.fecha_creacion || '';
         return `
             <div class="notif-item-enter flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer ${unread ? 'bg-primary-50/50 dark:bg-primary-500/5' : ''}" 
-                 data-notif-id="${n.ID_Notificacion}" onclick="window.NotifPanel.markRead(${n.ID_Notificacion})">
+                 data-notif-id="${notifId}" onclick="window.NotifPanel.markRead(${notifId})">
                 <div class="flex-shrink-0 mt-0.5">
                     <div class="w-8 h-8 rounded-lg ${colorClass} flex items-center justify-center">
                         <i data-lucide="${icon}" class="w-4 h-4"></i>
@@ -255,11 +259,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2">
-                        <p class="text-sm font-semibold ${unread ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'} leading-tight">${n.Titulo}</p>
+                        <p class="text-sm font-semibold ${unread ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'} leading-tight">${titulo}</p>
                         ${unread ? '<span class="flex-shrink-0 w-2 h-2 bg-primary-500 rounded-full notif-unread-pulse mt-1.5"></span>' : ''}
                     </div>
-                    <p class="text-xs ${unread ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500'} mt-0.5 leading-relaxed">${n.Mensaje}</p>
-                    <p class="text-[10px] text-slate-300 dark:text-slate-600 mt-1 font-medium">${timeAgo(n.Fecha_Creacion)}</p>
+                    <p class="text-xs ${unread ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500'} mt-0.5 leading-relaxed">${mensaje}</p>
+                    <p class="text-[10px] text-slate-300 dark:text-slate-600 mt-1 font-medium">${timeAgo(fecha)}</p>
                 </div>
             </div>
         `;
