@@ -166,9 +166,14 @@ def index():
 
     if not tabla_seleccionada:
         row = db_execute_safe(conn, "SELECT SUM(Monto) FROM Facturas WHERE Estado='Pagada'", fetch='one')
-        ingresos_total = row['sum'] if (IS_POSTGRES and row) else (row[0] if row and row[0] else 0)
-        if not IS_POSTGRES and row:
-            ingresos_total = row[0] if row[0] else 0
+        ingresos_total = 0
+        if row:
+            val = row['sum'] if IS_POSTGRES else (row[0] if hasattr(row, '__getitem__') else None)
+            if val is not None:
+                try:
+                    ingresos_total = float(val)
+                except (ValueError, TypeError):
+                    ingresos_total = 0
 
         cargas_raw = db_execute_safe(conn, 'SELECT Tipo_Carga, COUNT(*) as cant FROM Cargas GROUP BY Tipo_Carga', fetch='all', default=[])
         if IS_POSTGRES:

@@ -89,7 +89,7 @@
             </div>
             <span class="text-[10px] font-bold text-primary-500 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded-full">INGRESOS</span>
         </div>
-        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.ingresos) }}</h3>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.ingresos or 0) }}</h3>
         <div class="flex items-center gap-1.5 mt-1">
             {% if stats.crecimiento_ingresos > 0 %}
             <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-emerald-500">
@@ -117,7 +117,7 @@
             </div>
             <span class="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-full">GASTOS</span>
         </div>
-        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.gastos) }}</h3>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.gastos or 0) }}</h3>
         <div class="flex items-center gap-1.5 mt-1">
             <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ stats.total_gastos }} registros</span>
         </div>
@@ -132,8 +132,8 @@
             </div>
             <span class="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">UTILIDAD</span>
         </div>
-        <h3 class="text-xl font-bold text-slate-800 dark:text-white {% if stats.utilidad < 0 %}text-red-500{% endif %}">
-            ${{ "{:,.0f}".format(stats.utilidad) }}
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white {% if stats.utilidad and stats.utilidad < 0 %}text-red-500{% endif %}">
+            ${{ "{:,.0f}".format(stats.utilidad or 0) }}
         </h3>
         <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">Ganancia neta</p>
     </div>
@@ -147,14 +147,14 @@
             <span class="text-[10px] font-bold text-primary-400 uppercase">Rentabilidad</span>
         </div>
         <div class="flex items-center gap-4">
-            <h3 class="text-2xl font-bold">{{ "{:.1f}".format(stats.margen) }}%</h3>
+            <h3 class="text-2xl font-bold">{{ "{:.1f}".format(stats.margen or 0) }}%</h3>
             <div class="flex-shrink-0 w-[72px] h-[72px]">
                 <canvas id="margenMiniChart"></canvas>
             </div>
         </div>
         <div class="mt-2 flex items-center gap-3 text-[10px] text-slate-400">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Margen {{ "{:.1f}".format(stats.margen) }}%</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-600"></span> Restante {{ "{:.1f}".format(100 - stats.margen) }}%</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Margen {{ "{:.1f}".format(stats.margen or 0) }}%</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-600"></span> Restante {{ "{:.1f}".format(100 - (stats.margen or 0)) }}%</span>
         </div>
     </div>
 
@@ -166,7 +166,7 @@
             </div>
             <span class="text-[10px] font-bold text-violet-500 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 rounded-full">TICKET PROM</span>
         </div>
-        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.avg_ticket) }}</h3>
+        <h3 class="text-xl font-bold text-slate-800 dark:text-white">${{ "{:,.0f}".format(stats.avg_ticket or 0) }}</h3>
         <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">{{ stats.total_facturas }} facturas ({{ stats.total_facturas_pagadas }} pagadas)</p>
     </div>
 </div>

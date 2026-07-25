@@ -9,7 +9,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-xs font-medium text-slate-400 dark:text-slate-500">Ingresos</p>
-                <p class="text-2xl font-bold text-slate-800 dark:text-white mt-1">${{ "{:,.0f}".format(ingresos) }}</p>
+                <p class="text-2xl font-bold text-slate-800 dark:text-white mt-1">${{ "{:,.0f}".format(ingresos or 0) }}</p>
             </div>
             <div class="w-9 h-9 bg-primary-50 dark:bg-primary-500/10 rounded-lg flex items-center justify-center">
                 <i data-lucide="dollar-sign" class="w-5 h-5 text-primary-500"></i>
@@ -115,7 +115,7 @@
                 </span>
             </div>
             <p class="text-sm font-medium text-slate-600 dark:text-slate-300 truncate">{{ f['Nombre'] }}</p>
-            <p class="text-lg font-bold text-slate-800 dark:text-white mt-1">${{ "{:,.0f}".format(f['Monto']) }}</p>
+            <p class="text-lg font-bold text-slate-800 dark:text-white mt-1">${{ "{:,.0f}".format(f['Monto'] or 0) }}</p>
         </div>
         {% endfor %}
     </div>
