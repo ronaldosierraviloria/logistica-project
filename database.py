@@ -1,7 +1,9 @@
 import sqlite3
+import os
 
 def init_db():
-    conn = sqlite3.connect('logistica.db')
+    db_path = '/tmp/logistica.db' if os.environ.get('VERCEL') else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logistica.db')
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Usuario (

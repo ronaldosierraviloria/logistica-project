@@ -54,7 +54,10 @@ if not os.environ.get('VERCEL'):
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
 
-DATABASE = 'logistica.db'
+if os.environ.get('VERCEL'):
+    DATABASE = '/tmp/logistica.db'
+else:
+    DATABASE = os.path.join(base_dir, 'logistica.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -305,38 +308,42 @@ def configuracion():
     if request.method == 'POST':
         accion = request.form.get('accion')
         
-        if accion == 'guardar_config':
-            preferencias = {
-                'tema': request.form.get('tema', 'dark'),
-                'sidebar_colapsado': request.form.get('sidebar_colapsado', 'false'),
-                'notif_upload': request.form.get('notif_upload', 'true'),
-                'notif_eliminar': request.form.get('notif_eliminar', 'true'),
-                'notif_registro': request.form.get('notif_registro', 'true'),
-                'filas_tabla': request.form.get('filas_tabla', '10'),
-                'animaciones': request.form.get('animaciones', 'true')
-            }
-            for clave, valor in preferencias.items():
-                conn.execute('''
-                    INSERT INTO Configuracion (ID_Usuario, Clave, Valor) VALUES (?, ?, ?)
-                    ON CONFLICT(ID_Usuario, Clave) DO UPDATE SET Valor = excluded.Valor
-                ''', (user_id, clave, valor))
-            conn.commit()
-            flash('Configuracion guardada correctamente', 'success')
-        
-        elif accion == 'limpiar_notificaciones':
-            conn.execute('DELETE FROM Notificaciones WHERE ID_Usuario = ?', (user_id,))
-            conn.commit()
-            flash('Notificaciones eliminadas', 'success')
-        
-        elif accion == 'limpiar_db':
-            if session.get('user_role') == 'Administrador':
-                tablas = ['Empleados', 'Vehiculos', 'Rutas', 'Clientes', 'Cargas', 'Facturas', 'Proveedores', 'Gastos']
-                for t in tablas:
-                    conn.execute(f'DELETE FROM {t}')
+        try:
+            if accion == 'guardar_config':
+                preferencias = {
+                    'tema': request.form.get('tema', 'dark'),
+                    'sidebar_colapsado': request.form.get('sidebar_colapsado', 'false'),
+                    'notif_upload': request.form.get('notif_upload', 'true'),
+                    'notif_eliminar': request.form.get('notif_eliminar', 'true'),
+                    'notif_registro': request.form.get('notif_registro', 'true'),
+                    'filas_tabla': request.form.get('filas_tabla', '10'),
+                    'animaciones': request.form.get('animaciones', 'true')
+                }
+                for clave, valor in preferencias.items():
+                    conn.execute('''
+                        INSERT INTO Configuracion (ID_Usuario, Clave, Valor) VALUES (?, ?, ?)
+                        ON CONFLICT(ID_Usuario, Clave) DO UPDATE SET Valor = excluded.Valor
+                    ''', (user_id, clave, valor))
                 conn.commit()
-                flash('Base de datos limpiada exitosamente', 'success')
-            else:
-                flash('Solo administradores pueden limpiar la base de datos', 'danger')
+                flash('Configuracion guardada correctamente', 'success')
+            
+            elif accion == 'limpiar_notificaciones':
+                conn.execute('DELETE FROM Notificaciones WHERE ID_Usuario = ?', (user_id,))
+                conn.commit()
+                flash('Notificaciones eliminadas', 'success')
+            
+            elif accion == 'limpiar_db':
+                if session.get('user_role') == 'Administrador':
+                    tablas = ['Empleados', 'Vehiculos', 'Rutas', 'Clientes', 'Cargas', 'Facturas', 'Proveedores', 'Gastos']
+                    for t in tablas:
+                        conn.execute(f'DELETE FROM {t}')
+                    conn.commit()
+                    flash('Base de datos limpiada exitosamente', 'success')
+                else:
+                    flash('Solo administradores pueden limpiar la base de datos', 'danger')
+        except Exception as e:
+            print(f"Error en configuracion POST: {e}")
+            flash('Error al guardar la configuracion', 'danger')
         
         conn.close()
         return redirect(url_for('configuracion'))
@@ -848,6 +855,10 @@ def _ensure_configuracion_table():
 def before_request_handler():
     """Ejecuta migraciones ligeras antes de cada request."""
     if not hasattr(app, '_db_migrated'):
+        if os.environ.get('VERCEL'):
+            from database import init_db
+            if not os.path.exists(DATABASE):
+                init_db()
         _ensure_notificaciones_table()
         _ensure_configuracion_table()
         app._db_migrated = True
