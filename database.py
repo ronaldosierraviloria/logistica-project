@@ -1,14 +1,20 @@
 import os
 import sqlite3
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+def get_db_url():
+    return os.environ.get('DATABASE_URL')
 
 def get_db_connection():
     """Returns a database connection. Uses PostgreSQL if DATABASE_URL is set, otherwise SQLite."""
-    if DATABASE_URL:
+    db_url = get_db_url()
+    if db_url:
         import psycopg2
         import psycopg2.extras
-        conn = psycopg2.connect(DATABASE_URL)
+        # Ensure sslmode=require for cloud PostgreSQL (like Supabase) if not provided
+        if "sslmode=" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url = f"{db_url}{separator}sslmode=require"
+        conn = psycopg2.connect(db_url)
         conn.autocommit = False
         return conn
     else:
@@ -36,7 +42,7 @@ def row_to_dict(row, cursor=None):
     """Convert a database row to a dictionary."""
     if row is None:
         return None
-    if DATABASE_URL and cursor:
+    if get_db_url() and cursor:
         col_names = [desc[0] for desc in cursor.description]
         return dict(zip(col_names, row))
     elif hasattr(row, 'keys'):
@@ -45,7 +51,7 @@ def row_to_dict(row, cursor=None):
 
 def rows_to_dicts(rows, cursor=None):
     """Convert multiple database rows to a list of dictionaries."""
-    if DATABASE_URL and cursor:
+    if get_db_url() and cursor:
         col_names = [desc[0] for desc in cursor.description]
         return [dict(zip(col_names, r)) for r in rows]
     return [dict(r) if hasattr(r, 'keys') else r for r in rows]
