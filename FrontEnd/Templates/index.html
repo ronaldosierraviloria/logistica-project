@@ -63,12 +63,14 @@
 
     {% if session['user_role'] == 'Administrador' %}
     <div class="flex items-center gap-2">
-        <!-- Download Button (siempre visible) -->
+        <!-- Download Button (solo visible si hay datos en el sistema) -->
+        {% if hay_datos %}
         <a href="/exportar_datos"
            class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all focus:ring-4 focus:ring-emerald-500/20 shadow-soft hover:shadow-soft-md">
             <i data-lucide="download" class="w-4 h-4"></i>
             Descargar Excel
         </a>
+        {% endif %}
 
         <!-- Upload Button (siempre visible - agrega datos sin reemplazar) -->
         <form id="uploadForm" action="/upload_file" method="post" enctype="multipart/form-data">

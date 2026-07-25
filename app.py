@@ -196,15 +196,14 @@ def index():
         if not IS_POSTGRES and recientes:
             recientes = [dict(r) for r in recientes]
 
-        excel_filename = session.get('excel_filename')
-        excel_uploaded = excel_filename and os.path.exists(os.path.join(UPLOAD_FOLDER, excel_filename))
+        hay_datos = any(v > 0 for v in totales.values())
 
         conn.close()
         return render_template('index.html', vista='dashboard',
                                es_dashboard=True, totales=totales, ingresos=ingresos_total,
                                recientes=recientes, chart_cargas=json.dumps(chart_cargas),
                                chart_ingresos=json.dumps(chart_ingresos), tabla_activa='Centro de Control',
-                               excel_uploaded=excel_uploaded, excel_filename=excel_filename)
+                               hay_datos=hay_datos)
 
     else:
         datos_tabla = []
@@ -222,50 +221,50 @@ def index():
 # --- PROCESAMIENTO DE ARCHIVOS EXCEL XLSX Y CSV ---
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     file = request.files.get('file')
     if file and file.filename != '':
-        filepath = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
-        file.save(filepath)
         try:
-            excel_data = pd.read_excel(filepath, sheet_name=None)
-            if IS_POSTGRES:
-                engine = pd.io.sql.SQLDatabase(pd.io.sql.SQLTable(
-                    'temp', pd.io.sql.SQLDatabase(DATABASE_URL), None
-                ) if False else None)
-                import sqlalchemy
-                engine = sqlalchemy.create_engine(DATABASE_URL)
-                tablas_validas = ['Usuario', 'Empleados', 'Vehiculos', 'Rutas', 'Clientes', 'Cargas', 'Facturas', 'Proveedores', 'Gastos']
-                for hoja, df in excel_data.items():
-                    if hoja.strip() in tablas_validas:
-                        df.to_sql(hoja.strip(), engine, if_exists='append', index=False)
-                engine.dispose()
-            else:
-                conn = sqlite3.connect(os.path.join(base_dir, 'logistica.db'))
-                tablas_validas = ['Usuario', 'Empleados', 'Vehiculos', 'Rutas', 'Clientes', 'Cargas', 'Facturas', 'Proveedores', 'Gastos']
-                for hoja, df in excel_data.items():
-                    if hoja.strip() in tablas_validas:
-                        df.to_sql(hoja.strip(), conn, if_exists='append', index=False)
-                conn.commit()
-                conn.close()
+            excel_data = pd.read_excel(file.stream, sheet_name=None)
+            tablas_validas = ['Usuario', 'Empleados', 'Vehiculos', 'Rutas', 'Clientes', 'Cargas', 'Facturas', 'Proveedores', 'Gastos']
+            
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            registros_importados = 0
+            
+            for hoja, df in excel_data.items():
+                nombre_tabla = hoja.strip()
+                if nombre_tabla in tablas_validas and not df.empty:
+                    df_clean = df.where(pd.notnull(df), None)
+                    cols = list(df_clean.columns)
+                    
+                    if IS_POSTGRES:
+                        col_names = ", ".join([f'"{c}"' for c in cols])
+                        placeholders = ", ".join(["%s"] * len(cols))
+                        query = f'INSERT INTO "{nombre_tabla}" ({col_names}) VALUES ({placeholders})'
+                    else:
+                        col_names = ", ".join([f'"{c}"' for c in cols])
+                        placeholders = ", ".join(["?"] * len(cols))
+                        query = f'INSERT INTO "{nombre_tabla}" ({col_names}) VALUES ({placeholders})'
+                    
+                    for row in df_clean.itertuples(index=False, name=None):
+                        cursor.execute(query, row)
+                        registros_importados += 1
+            
+            conn.commit()
+            conn.close()
             session['excel_filename'] = secure_filename(file.filename)
-            crear_notificacion('upload', 'Carga de datos', f'Archivo "{file.filename}" importado correctamente a la base de datos.', 'upload')
-            flash('¡Base de datos alimentada correctamente!', 'success')
-        except Exception as e: flash(f'Error: {str(e)}', 'danger')
+            crear_notificacion('upload', 'Carga de datos', f'Archivo "{file.filename}" ({registros_importados} registros) importado correctamente.', 'upload')
+            flash(f'¡Base de datos alimentada correctamente ({registros_importados} registros)!', 'success')
+        except Exception as e:
+            print(f"Error procesando Excel: {e}")
+            flash(f'Error al procesar el archivo Excel: {str(e)}', 'danger')
     return redirect(url_for('index'))
 
 @app.route('/descargar_excel')
 def descargar_excel():
-    if 'user_id' not in session: return redirect(url_for('login'))
-    filename = session.get('excel_filename')
-    if not filename:
-        flash('No hay archivo Excel para descargar', 'warning')
-        return redirect(url_for('index'))
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    if not os.path.exists(filepath):
-        flash('El archivo Excel ya no está disponible', 'warning')
-        session.pop('excel_filename', None)
-        return redirect(url_for('index'))
-    return send_file(filepath, as_attachment=True, download_name=filename)
+    return redirect(url_for('exportar_datos'))
 
 @app.route('/exportar_datos')
 def exportar_datos():
@@ -278,10 +277,11 @@ def exportar_datos():
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         for tabla in tablas:
             try:
-                if IS_POSTGRES:
-                    df = pd.read_sql_query(f'SELECT * FROM {tabla}', conn)
-                else:
-                    df = pd.read_sql_query(f'SELECT * FROM {tabla}', conn)
+                cursor = conn.cursor()
+                cursor.execute(f'SELECT * FROM "{tabla}"')
+                rows = cursor.fetchall()
+                cols = [desc[0] for desc in cursor.description] if cursor.description else []
+                df = pd.DataFrame(rows, columns=cols)
                 df.to_excel(writer, sheet_name=tabla, index=False)
             except Exception as e:
                 print(f"Error exportando {tabla}: {e}")
