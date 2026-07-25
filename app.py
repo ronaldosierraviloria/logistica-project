@@ -236,22 +236,55 @@ def upload_file():
             for hoja, df in excel_data.items():
                 nombre_tabla = hoja.strip()
                 if nombre_tabla in tablas_validas and not df.empty:
-                    df_clean = df.where(pd.notnull(df), None)
-                    cols = list(df_clean.columns)
-                    
-                    if IS_POSTGRES:
-                        col_names = ", ".join([f'"{c}"' for c in cols])
-                        placeholders = ", ".join(["%s"] * len(cols))
-                        query = f'INSERT INTO "{nombre_tabla}" ({col_names}) VALUES ({placeholders})'
-                    else:
-                        col_names = ", ".join([f'"{c}"' for c in cols])
-                        placeholders = ", ".join(["?"] * len(cols))
-                        query = f'INSERT INTO "{nombre_tabla}" ({col_names}) VALUES ({placeholders})'
-                    
-                    for row in df_clean.itertuples(index=False, name=None):
-                        cursor.execute(query, row)
-                        registros_importados += 1
-            
+                    try:
+                        if IS_POSTGRES:
+                            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s", (nombre_tabla,))
+                            fetched = cursor.fetchall()
+                            db_cols = [r['column_name'] if isinstance(r, dict) else r[0] for r in fetched]
+                        else:
+                            cursor.execute(f"PRAGMA table_info('{nombre_tabla}')")
+                            fetched = cursor.fetchall()
+                            db_cols = [r[1] for r in fetched]
+                    except Exception as err_cols:
+                        print(f"Error consultando columnas de {nombre_tabla}: {err_cols}")
+                        db_cols = []
+
+                    if db_cols:
+                        db_cols_map = {str(c).lower(): str(c) for c in db_cols}
+                        matched_excel_cols = [c for c in df.columns if str(c).strip().lower() in db_cols_map]
+                        
+                        if matched_excel_cols:
+                            df_filtered = df[matched_excel_cols]
+                            target_cols = [db_cols_map[str(c).strip().lower()] for c in matched_excel_cols]
+                            
+                            if IS_POSTGRES:
+                                col_names = ", ".join([f'"{c}"' for c in target_cols])
+                                placeholders = ", ".join(["%s"] * len(target_cols))
+                                query = f'INSERT INTO "{nombre_tabla}" ({col_names}) VALUES ({placeholders}) ON CONFLICT DO NOTHING'
+                            else:
+                                col_names = ", ".join([f'"{c}"' for c in target_cols])
+                                placeholders = ", ".join(["?"] * len(target_cols))
+                                query = f'INSERT OR IGNORE INTO "{nombre_tabla}" ({col_names}) VALUES ({placeholders})'
+                            
+                            for row in df_filtered.itertuples(index=False, name=None):
+                                clean_row = []
+                                for val in row:
+                                    if pd.isna(val) or val is None:
+                                        clean_row.append(None)
+                                    elif hasattr(val, 'item'):
+                                        clean_row.append(val.item())
+                                    elif isinstance(val, (datetime, pd.Timestamp)):
+                                        clean_row.append(str(val)[:10])
+                                    else:
+                                        clean_row.append(val)
+                                try:
+                                    cursor.execute(query, clean_row)
+                                    registros_importados += 1
+                                except Exception as err_row:
+                                    print(f"Advertencia insertando en {nombre_tabla}: {err_row}")
+                                    if IS_POSTGRES:
+                                        conn.rollback()
+
             conn.commit()
             conn.close()
             session['excel_filename'] = secure_filename(file.filename)
