@@ -997,18 +997,19 @@ def api_get_notificaciones():
     if 'user_id' not in session:
         return jsonify({'error': 'No autenticado'}), 401
     conn = get_db_connection()
-    notifs = db_execute(conn,
+    notifs = db_execute_safe(conn,
         'SELECT ID_Notificacion, Tipo, Titulo, Mensaje, Icono, Leida, Fecha_Creacion FROM Notificaciones WHERE ID_Usuario = %s ORDER BY Fecha_Creacion DESC LIMIT 50',
-        (session['user_id'],), fetch='all'
+        (session['user_id'],), fetch='all', default=[]
     )
-    no_leidas = db_execute(conn,
-        'SELECT COUNT(*) FROM Notificaciones WHERE ID_Usuario = %s AND Leida = 0',
-        (session['user_id'],), fetch='count'
+    query_no_leidas = 'SELECT COUNT(*) FROM Notificaciones WHERE ID_Usuario = %s AND Leida = FALSE' if IS_POSTGRES else 'SELECT COUNT(*) FROM Notificaciones WHERE ID_Usuario = %s AND Leida = 0'
+    no_leidas = db_execute_safe(conn,
+        query_no_leidas,
+        (session['user_id'],), fetch='count', default=0
     )
     conn.close()
     return jsonify({
-        'notificaciones': notifs,
-        'no_leidas': no_leidas
+        'notificaciones': notifs or [],
+        'no_leidas': no_leidas or 0
     })
 
 @app.route('/api/notificaciones/<int:notif_id>/leer', methods=['POST'])
@@ -1016,8 +1017,9 @@ def api_mark_read(notif_id):
     if 'user_id' not in session:
         return jsonify({'error': 'No autenticado'}), 401
     conn = get_db_connection()
-    db_execute(conn,
-        'UPDATE Notificaciones SET Leida = 1 WHERE ID_Notificacion = %s AND ID_Usuario = %s',
+    query_mark = 'UPDATE Notificaciones SET Leida = TRUE WHERE ID_Notificacion = %s AND ID_Usuario = %s' if IS_POSTGRES else 'UPDATE Notificaciones SET Leida = 1 WHERE ID_Notificacion = %s AND ID_Usuario = %s'
+    db_execute_safe(conn,
+        query_mark,
         (notif_id, session['user_id']), fetch='none'
     )
     conn.close()
@@ -1028,8 +1030,9 @@ def api_mark_all_read():
     if 'user_id' not in session:
         return jsonify({'error': 'No autenticado'}), 401
     conn = get_db_connection()
-    db_execute(conn,
-        'UPDATE Notificaciones SET Leida = 1 WHERE ID_Usuario = %s AND Leida = 0',
+    query_mark_all = 'UPDATE Notificaciones SET Leida = TRUE WHERE ID_Usuario = %s AND Leida = FALSE' if IS_POSTGRES else 'UPDATE Notificaciones SET Leida = 1 WHERE ID_Usuario = %s AND Leida = 0'
+    db_execute_safe(conn,
+        query_mark_all,
         (session['user_id'],), fetch='none'
     )
     conn.close()
@@ -1040,8 +1043,8 @@ def api_get_configuracion():
     if 'user_id' not in session:
         return jsonify({'error': 'No autenticado'}), 401
     conn = get_db_connection()
-    config_rows = db_execute(conn,
-        'SELECT Clave, Valor FROM Configuracion WHERE ID_Usuario = %s', (session['user_id'],), fetch='all'
+    config_rows = db_execute_safe(conn,
+        'SELECT Clave, Valor FROM Configuracion WHERE ID_Usuario = %s', (session['user_id'],), fetch='all', default=[]
     )
     conn.close()
     if IS_POSTGRES:
@@ -1063,8 +1066,9 @@ def api_clear_notifications():
     if 'user_id' not in session:
         return jsonify({'error': 'No autenticado'}), 401
     conn = get_db_connection()
-    db_execute(conn,
-        'DELETE FROM Notificaciones WHERE ID_Usuario = %s AND Leida = 1',
+    query_clear = 'DELETE FROM Notificaciones WHERE ID_Usuario = %s AND Leida = TRUE' if IS_POSTGRES else 'DELETE FROM Notificaciones WHERE ID_Usuario = %s AND Leida = 1'
+    db_execute_safe(conn,
+        query_clear,
         (session['user_id'],), fetch='none'
     )
     conn.close()
