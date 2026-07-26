@@ -150,8 +150,12 @@
                     </div>
                 </div>
 
-                <!-- Right: notifications + profile -->
+                <!-- Right: theme toggle + notifications + profile -->
                 <div class="flex items-center gap-1.5">
+                    <button id="theme-toggle" class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-primary-500 dark:hover:text-primary-400 transition-colors" title="Cambiar tema">
+                        <i id="theme-toggle-icon" data-lucide="sun" class="w-5 h-5"></i>
+                    </button>
+
                     {% include 'components/notification_panel.html' %}
 
                     <div class="relative">
