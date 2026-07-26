@@ -314,6 +314,8 @@
     </div>
 </div>
 
+<div id="data-margenes" style="display:none">{{ chart_margenes }}</div>
+
 <script>
 Chart.register(ChartDataLabels);
 Chart.defaults.font.family = "'Inter', sans-serif";
@@ -576,102 +578,130 @@ new Chart(ctxCli, {
 });
 
 // ============================================================
-// CHART 5: Margenes Mensuales (Bar with line overlay)
+// CHART 5: Evolucion del Margen (Bar + Line overlay)
 // ============================================================
-const dataMargenes = JSON.parse('{{ chart_margenes | safe }}');
-const ctxMarg = document.getElementById('margenesChart').getContext('2d');
+(function() {
+    const raw = document.getElementById('data-margenes');
+    let dataMargenes = { labels: [], values: [], utilidad: [] };
+    try { dataMargenes = JSON.parse(raw ? raw.textContent : '{}'); } catch(e) {}
 
-const margenGrad = ctxMarg.createLinearGradient(0, 0, 0, 280);
-margenGrad.addColorStop(0, 'rgba(16, 185, 129, 0.5)');
-margenGrad.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+    // Sanitize: replace null/undefined values
+    const labels   = (dataMargenes.labels   || []).map(l => l || '');
+    const values   = (dataMargenes.values   || []).map(v => (v !== null && v !== undefined) ? parseFloat(v) : 0);
+    const utilidad = (dataMargenes.utilidad || []).map(u => (u !== null && u !== undefined) ? parseFloat(u) : 0);
 
-new Chart(ctxMarg, {
-    type: 'bar',
-    data: {
-        labels: dataMargenes.labels,
-        datasets: [{
-            label: 'Margen %',
-            data: dataMargenes.values,
-            backgroundColor: dataMargenes.values.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)'),
-            borderRadius: 6,
-            barThickness: 36,
-            yAxisID: 'y'
-        }, {
-            label: 'Utilidad ($)',
-            data: dataMargenes.utilidad,
-            type: 'line',
-            borderColor: '#6366f1',
-            backgroundColor: margenGrad,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: '#6366f1',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            borderWidth: 2.5,
-            yAxisID: 'y1'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-            intersect: false,
-            mode: 'index'
-        },
-        plugins: {
-            legend: {
-                position: 'top',
-                align: 'end',
-                labels: { color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 10, weight: '600' } }
-            },
-            datalabels: {
-                anchor: 'end',
-                align: 'end',
-                offset: 2,
-                color: textColor,
-                font: { weight: '700', size: 9 },
-                formatter: (v, ctx) => ctx.datasetIndex === 0 ? v + '%' : ''
-            },
-            tooltip: {
-                backgroundColor: isDark ? '#1e293b' : '#fff',
-                titleColor: isDark ? '#f1f5f9' : '#1e293b',
-                bodyColor: isDark ? '#94a3b8' : '#64748b',
-                borderColor: isDark ? '#334155' : '#e2e8f0',
+    if (labels.length === 0) {
+        // No data state
+        const wrapper = document.getElementById('margenesChart').parentNode;
+        wrapper.innerHTML = '<div class="h-full flex flex-col items-center justify-center gap-2 text-slate-300 dark:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg><p class="text-xs font-medium">Sin datos de margen</p></div>';
+        return;
+    }
+
+    const ctxMarg = document.getElementById('margenesChart').getContext('2d');
+    const margenGrad = ctxMarg.createLinearGradient(0, 0, 0, 280);
+    margenGrad.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
+    margenGrad.addColorStop(1, 'rgba(99, 102, 241, 0.01)');
+
+    // Bar colors: green if positive, red if negative
+    const barColors = values.map(v => v >= 0
+        ? 'rgba(16, 185, 129, 0.75)'
+        : 'rgba(244, 63, 94, 0.75)'
+    );
+    const barBorderColors = values.map(v => v >= 0
+        ? 'rgb(16, 185, 129)'
+        : 'rgb(244, 63, 94)'
+    );
+
+    new Chart(ctxMarg, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Margen %',
+                data: values,
+                backgroundColor: barColors,
+                borderColor: barBorderColors,
                 borderWidth: 1,
-                padding: 12,
-                cornerRadius: 10
-            }
+                borderRadius: 6,
+                borderSkipped: false,
+                barPercentage: 0.6,
+                yAxisID: 'y'
+            }, {
+                label: 'Utilidad ($)',
+                data: utilidad,
+                type: 'line',
+                borderColor: '#6366f1',
+                backgroundColor: margenGrad,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#6366f1',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                borderWidth: 2,
+                yAxisID: 'y1'
+            }]
         },
-        scales: {
-            y: {
-                position: 'left',
-                grid: { color: gridColor },
-                ticks: {
-                    font: { size: 10 },
-                    callback: function(value) { return value + '%'; }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    align: 'end',
+                    labels: { color: textColor, usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 10, weight: '600' } }
                 },
-                beginAtZero: true
-            },
-            y1: {
-                position: 'right',
-                grid: { display: false },
-                ticks: {
-                    font: { size: 10 },
-                    callback: function(value) { return '$' + (value / 1000000).toFixed(0) + 'M'; }
+                datalabels: {
+                    display: (ctx) => ctx.datasetIndex === 0,
+                    anchor: 'end',
+                    align: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 0 ? 'top' : 'bottom',
+                    offset: 2,
+                    color: textColor,
+                    font: { weight: '700', size: 9 },
+                    formatter: (v) => v.toFixed(1) + '%'
+                },
+                tooltip: {
+                    backgroundColor: isDark ? '#1e293b' : '#fff',
+                    titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                    bodyColor: isDark ? '#94a3b8' : '#64748b',
+                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                        label: (ctx) => {
+                            if (ctx.datasetIndex === 0) return ' Margen: ' + ctx.parsed.y.toFixed(1) + '%';
+                            const millions = (ctx.parsed.y / 1000000).toFixed(2);
+                            return ' Utilidad: $' + millions + 'M';
+                        }
+                    }
                 }
             },
-            x: {
-                grid: { display: false },
-                ticks: { font: { size: 10, weight: '600' } }
-            }
-        },
-        animation: {
-            duration: 1200,
-            easing: 'easeOutQuart'
+            scales: {
+                y: {
+                    position: 'left',
+                    grid: { color: gridColor },
+                    ticks: { font: { size: 10 }, callback: (v) => v + '%' },
+                    title: { display: false }
+                },
+                y1: {
+                    position: 'right',
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 10 },
+                        callback: (v) => '$' + (v / 1000000).toFixed(1) + 'M'
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10, weight: '600' } }
+                }
+            },
+            animation: { duration: 1200, easing: 'easeOutQuart' }
         }
-    }
-});
+    });
+})();
 
 function aplicarFiltros() {
     const anio = document.getElementById('anioSelector').value;

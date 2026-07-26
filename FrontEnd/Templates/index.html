@@ -54,25 +54,10 @@
     </div>
 </div>
 
-<!-- Header + Upload/Download -->
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-    <div>
-        <h2 class="text-xl font-bold text-slate-800 dark:text-white">Panel de Analisis</h2>
-        <p class="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Visualizacion de datos operativos en tiempo real</p>
-    </div>
-
-    {% if session['user_role'] == 'Administrador' %}
-    <div class="flex items-center gap-2">
-        <!-- Download Button (solo visible si hay datos en el sistema) -->
-        {% if hay_datos %}
-        <a href="/exportar_datos"
-           class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all focus:ring-4 focus:ring-emerald-500/20 shadow-soft hover:shadow-soft-md">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            Descargar Excel
-        </a>
-        {% endif %}
-    </div>
-    {% endif %}
+<!-- Header -->
+<div class="mb-6">
+    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Panel de Analisis</h2>
+    <p class="text-sm text-slate-400 dark:text-slate-500 mt-0.5">Visualizacion de datos operativos en tiempo real</p>
 </div>
 
 <!-- Charts -->
