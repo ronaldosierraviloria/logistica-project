@@ -626,20 +626,6 @@ new Chart(ctxCli, {
                 borderSkipped: false,
                 barPercentage: 0.6,
                 yAxisID: 'y'
-            }, {
-                label: 'Utilidad ($)',
-                data: utilidad,
-                type: 'line',
-                borderColor: '#6366f1',
-                backgroundColor: margenGrad,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointBackgroundColor: '#6366f1',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                borderWidth: 2,
-                yAxisID: 'y1'
             }]
         },
         options: {
@@ -671,9 +657,7 @@ new Chart(ctxCli, {
                     cornerRadius: 10,
                     callbacks: {
                         label: (ctx) => {
-                            if (ctx.datasetIndex === 0) return ' Margen: ' + ctx.parsed.y.toFixed(1) + '%';
-                            const millions = (ctx.parsed.y / 1000000).toFixed(2);
-                            return ' Utilidad: $' + millions + 'M';
+                            return ' Margen: ' + ctx.parsed.y.toFixed(1) + '%';
                         }
                     }
                 }
@@ -684,14 +668,6 @@ new Chart(ctxCli, {
                     grid: { color: gridColor },
                     ticks: { font: { size: 10 }, callback: (v) => v + '%' },
                     title: { display: false }
-                },
-                y1: {
-                    position: 'right',
-                    grid: { display: false },
-                    ticks: {
-                        font: { size: 10 },
-                        callback: (v) => '$' + (v / 1000000).toFixed(1) + 'M'
-                    }
                 },
                 x: {
                     grid: { display: false },
